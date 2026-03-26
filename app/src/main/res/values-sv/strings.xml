@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Widget -->
+    <string name="widget_name">Taskig Idag</string>
+    <string name="widget_description">Dagens uppgifter i en överblick</string>
+    <string name="widget_today">IDAG</string>
+    <string name="widget_done_count">%1$d/%2$d klara</string>
+    <string name="widget_no_tasks">Inga uppgifter idag</string>
+    <string name="widget_overdue">försenad</string>
+    <string name="widget_refresh">Uppdatera</string>
+
+    <!-- Sign-in -->
+    <string name="sign_in_subtitle">Dagens uppgifter, i en överblick</string>
+    <string name="sign_in_button">Logga in med Google</string>
+    <string name="sign_in_error_no_account">Kunde inte hitta Google-konto</string>
+    <string name="sign_in_cancelled">Inloggning avbruten</string>
+    <string name="sign_in_failed">Inloggning misslyckades</string>
+
+    <!-- Today screen -->
+    <string name="section_overdue">Försenade</string>
+    <string name="section_due_today">Idag</string>
+    <string name="section_completed">Klara</string>
+    <string name="no_tasks_due_today">Inga uppgifter idag</string>
+    <string name="all_done_title">Allt klart!</string>
+    <string name="all_done_subtitle">Du har slutfört allt för idag</string>
+    <string name="streak_days">%1$d dagar i rad</string>
+    <string name="error_sync_failed">Synkronisering misslyckades</string>
+    <string name="error_task_update_failed">Kunde inte uppdatera uppgift</string>
+    <string name="postpone_title">Skjut upp uppgift</string>
+    <string name="postpone_today">Idag</string>
+    <string name="postpone_tomorrow">Imorgon</string>
+    <string name="postpone_next_week">Nästa vecka</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_settings">Inställningar</string>
+    <string name="cd_back">Tillbaka</string>
+    <string name="cd_collapse">Fäll ihop</string>
+    <string name="cd_expand">Expandera</string>
+    <string name="cd_complete">Slutför</string>
+    <string name="cd_uncomplete">Ångra slutförd</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Inställningar</string>
+    <string name="settings_section_display">App</string>
+    <string name="settings_theme_title">Tema</string>
+    <string name="settings_theme_subtitle">Färgpalett för app och widget</string>
+    <string name="theme_system">System</string>
+    <string name="theme_catppuccin">Catppuccin</string>
+    <string name="theme_rose_pine">Rosé Pine</string>
+    <string name="theme_gruvbox">Gruvbox</string>
+    <string name="theme_tokyo_night">Tokyo Night</string>
+    <string name="theme_dracula">Dracula</string>
+    <string name="theme_kanagawa">Kanagawa</string>
+    <string name="theme_oxocarbon">Oxocarbon</string>
+    <string name="settings_grouping_title">Gruppering</string>
+    <string name="settings_grouping_subtitle">Hur uppgifter organiseras inom varje sektion</string>
+    <string name="settings_grouping_flat">Platt</string>
+    <string name="settings_grouping_by_list">Per lista</string>
+    <string name="settings_list_order_title">Listordning</string>
+    <string name="settings_list_order_subtitle">Vilken lista visas först i platt läge</string>
+    <string name="settings_completion_title">Slutför uppgifter med</string>
+    <string name="settings_completion_subtitle">Hur du markerar uppgifter som klara</string>
+    <string name="settings_completion_tap">Tryck</string>
+    <string name="settings_completion_swipe">Svep</string>
+    <string name="settings_completion_both">Båda</string>
+
+    <!-- Widget settings -->
+    <string name="settings_section_widget">Widget</string>
+    <string name="settings_widget_bg_title">Bakgrund</string>
+    <string name="settings_widget_bg_subtitle">Widgetens bakgrundsfärg</string>
+    <string name="settings_widget_opacity_title">Opacitet</string>
+    <string name="settings_widget_opacity_subtitle">Bakgrundens genomskinlighet</string>
+    <string name="settings_widget_show_completed_title">Visa klara</string>
+    <string name="settings_widget_show_completed_subtitle">Visa avslutade uppgifter i widgeten</string>
+    <string name="settings_widget_sorting_title">Sortering</string>
+    <string name="settings_widget_sorting_subtitle">Hur uppgifter organiseras i widgeten</string>
+    <string name="settings_widget_color_auto">Auto</string>
+    <string name="settings_widget_color_white">Vit</string>
+    <string name="settings_widget_color_dark">Mörk</string>
+    <string name="settings_widget_color_black">Svart</string>
+
+    <!-- Quick share -->
+    <string name="settings_section_share">Snabbdelning</string>
+    <string name="settings_share_list_title">Standardlista</string>
+    <string name="settings_share_list_subtitle">Var delade objekt läggs till</string>
+    <string name="settings_share_list_none">Ej vald</string>
+    <string name="settings_share_list_loading">Laddar listor…</string>
+    <string name="share_added_to">Tillagd i %1$s</string>
+    <string name="share_failed">Kunde inte lägga till uppgift</string>
+    <string name="share_no_content">Inget att dela</string>
+
+    <!-- Stats -->
+    <string name="settings_section_stats">Statistik</string>
+    <string name="settings_streak_title">Nuvarande svit</string>
+    <string name="settings_streak_subtitle">Dagar i rad med alla uppgifter slutförda</string>
+    <string name="settings_streak_value">%1$d dagar</string>
+    <string name="settings_streak_none">Ingen svit ännu</string>
+
+    <!-- Layout density (shared) -->
+    <string name="settings_layout_title">Layouttäthet</string>
+    <string name="settings_layout_subtitle">Radavstånd och textstorlek</string>
+    <string name="settings_layout_comfortable">Bekväm</string>
+    <string name="settings_layout_default">Standard</string>
+    <string name="settings_layout_compact">Kompakt</string>
+</resources>
