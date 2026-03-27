@@ -34,6 +34,19 @@ data class WidgetSettings(
     val theme: String = "SYSTEM",
 )
 
+data class ReminderSettings(
+    val enabled: Boolean = false,
+    val morningEnabled: Boolean = true,
+    val morningHour: Int = 8,
+    val morningMinute: Int = 0,
+    val middayEnabled: Boolean = true,
+    val middayHour: Int = 12,
+    val middayMinute: Int = 0,
+    val eveningEnabled: Boolean = true,
+    val eveningHour: Int = 18,
+    val eveningMinute: Int = 0,
+)
+
 @Singleton
 class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -58,6 +71,18 @@ class SettingsRepository @Inject constructor(
     private val widgetShowCompletedKey = booleanPreferencesKey("widget_show_completed")
     private val widgetLayoutDensityKey = stringPreferencesKey("widget_layout_density")
     private val widgetSortingKey = stringPreferencesKey("widget_sorting")
+
+    // -- Reminder settings --
+    private val remindersEnabledKey = booleanPreferencesKey("reminders_enabled")
+    private val reminderMorningEnabledKey = booleanPreferencesKey("reminder_morning_enabled")
+    private val reminderMorningHourKey = intPreferencesKey("reminder_morning_hour")
+    private val reminderMorningMinuteKey = intPreferencesKey("reminder_morning_minute")
+    private val reminderMiddayEnabledKey = booleanPreferencesKey("reminder_midday_enabled")
+    private val reminderMiddayHourKey = intPreferencesKey("reminder_midday_hour")
+    private val reminderMiddayMinuteKey = intPreferencesKey("reminder_midday_minute")
+    private val reminderEveningEnabledKey = booleanPreferencesKey("reminder_evening_enabled")
+    private val reminderEveningHourKey = intPreferencesKey("reminder_evening_hour")
+    private val reminderEveningMinuteKey = intPreferencesKey("reminder_evening_minute")
 
     // -- App settings --
 
@@ -226,6 +251,85 @@ class SettingsRepository @Inject constructor(
         context.settingsDataStore.edit { it[widgetSortingKey] = sorting.name }
     }
 
+    // -- Reminder settings --
+
+    val remindersEnabled: Flow<Boolean> = context.settingsDataStore.data.map { prefs ->
+        prefs[remindersEnabledKey] ?: false
+    }
+
+    suspend fun setRemindersEnabled(enabled: Boolean) {
+        context.settingsDataStore.edit { it[remindersEnabledKey] = enabled }
+    }
+
+    val reminderMorningEnabled: Flow<Boolean> = context.settingsDataStore.data.map { prefs ->
+        prefs[reminderMorningEnabledKey] ?: true
+    }
+
+    val reminderMorningHour: Flow<Int> = context.settingsDataStore.data.map { prefs ->
+        prefs[reminderMorningHourKey] ?: 8
+    }
+
+    val reminderMorningMinute: Flow<Int> = context.settingsDataStore.data.map { prefs ->
+        prefs[reminderMorningMinuteKey] ?: 0
+    }
+
+    suspend fun setReminderMorningEnabled(enabled: Boolean) {
+        context.settingsDataStore.edit { it[reminderMorningEnabledKey] = enabled }
+    }
+
+    suspend fun setReminderMorningTime(hour: Int, minute: Int) {
+        context.settingsDataStore.edit {
+            it[reminderMorningHourKey] = hour
+            it[reminderMorningMinuteKey] = minute
+        }
+    }
+
+    val reminderMiddayEnabled: Flow<Boolean> = context.settingsDataStore.data.map { prefs ->
+        prefs[reminderMiddayEnabledKey] ?: true
+    }
+
+    val reminderMiddayHour: Flow<Int> = context.settingsDataStore.data.map { prefs ->
+        prefs[reminderMiddayHourKey] ?: 12
+    }
+
+    val reminderMiddayMinute: Flow<Int> = context.settingsDataStore.data.map { prefs ->
+        prefs[reminderMiddayMinuteKey] ?: 0
+    }
+
+    suspend fun setReminderMiddayEnabled(enabled: Boolean) {
+        context.settingsDataStore.edit { it[reminderMiddayEnabledKey] = enabled }
+    }
+
+    suspend fun setReminderMiddayTime(hour: Int, minute: Int) {
+        context.settingsDataStore.edit {
+            it[reminderMiddayHourKey] = hour
+            it[reminderMiddayMinuteKey] = minute
+        }
+    }
+
+    val reminderEveningEnabled: Flow<Boolean> = context.settingsDataStore.data.map { prefs ->
+        prefs[reminderEveningEnabledKey] ?: true
+    }
+
+    val reminderEveningHour: Flow<Int> = context.settingsDataStore.data.map { prefs ->
+        prefs[reminderEveningHourKey] ?: 18
+    }
+
+    val reminderEveningMinute: Flow<Int> = context.settingsDataStore.data.map { prefs ->
+        prefs[reminderEveningMinuteKey] ?: 0
+    }
+
+    suspend fun setReminderEveningEnabled(enabled: Boolean) {
+        context.settingsDataStore.edit { it[reminderEveningEnabledKey] = enabled }
+    }
+
+    suspend fun setReminderEveningTime(hour: Int, minute: Int) {
+        context.settingsDataStore.edit {
+            it[reminderEveningHourKey] = hour
+            it[reminderEveningMinuteKey] = minute
+        }
+    }
+
     companion object {
         /** Reactive Flow for widget — emits whenever any widget setting changes. */
         fun widgetSettingsFlow(context: Context): Flow<WidgetSettings> =
@@ -247,6 +351,23 @@ class SettingsRepository @Inject constructor(
         suspend fun readWidgetSettings(context: Context): WidgetSettings {
             val prefs = context.settingsDataStore.data.first()
             return prefsToWidgetSettings(prefs)
+        }
+
+        /** Snapshot read of all reminder settings for scheduling. */
+        suspend fun readReminderSettings(context: Context): ReminderSettings {
+            val prefs = context.settingsDataStore.data.first()
+            return ReminderSettings(
+                enabled = prefs[booleanPreferencesKey("reminders_enabled")] ?: false,
+                morningEnabled = prefs[booleanPreferencesKey("reminder_morning_enabled")] ?: true,
+                morningHour = prefs[intPreferencesKey("reminder_morning_hour")] ?: 8,
+                morningMinute = prefs[intPreferencesKey("reminder_morning_minute")] ?: 0,
+                middayEnabled = prefs[booleanPreferencesKey("reminder_midday_enabled")] ?: true,
+                middayHour = prefs[intPreferencesKey("reminder_midday_hour")] ?: 12,
+                middayMinute = prefs[intPreferencesKey("reminder_midday_minute")] ?: 0,
+                eveningEnabled = prefs[booleanPreferencesKey("reminder_evening_enabled")] ?: true,
+                eveningHour = prefs[intPreferencesKey("reminder_evening_hour")] ?: 18,
+                eveningMinute = prefs[intPreferencesKey("reminder_evening_minute")] ?: 0,
+            )
         }
 
         private fun prefsToWidgetSettings(prefs: androidx.datastore.preferences.core.Preferences): WidgetSettings =
