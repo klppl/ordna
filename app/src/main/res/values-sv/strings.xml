@@ -114,4 +114,21 @@
     <string name="settings_layout_comfortable">Bekväm</string>
     <string name="settings_layout_default">Standard</string>
     <string name="settings_layout_compact">Kompakt</string>
+
+    <!-- Reminders -->
+    <string name="settings_section_reminders">Påminnelser</string>
+    <string name="reminder_master_toggle">Uppgiftspåminnelser</string>
+    <string name="reminder_master_subtitle">Bli påmind om att kolla dina uppgifter</string>
+    <string name="reminder_morning">Morgon</string>
+    <string name="reminder_midday">Mitt på dagen</string>
+    <string name="reminder_evening">Kväll</string>
+    <string name="reminder_channel_name">Uppgiftspåminnelser</string>
+    <string name="reminder_title_morning">God morgon</string>
+    <string name="reminder_title_midday">God eftermiddag</string>
+    <string name="reminder_title_evening">God kväll</string>
+    <plurals name="reminder_body">
+        <item quantity="one">Du har %1$d uppgift kvar idag</item>
+        <item quantity="other">Du har %1$d uppgifter kvar idag</item>
+    </plurals>
+    <string name="reminder_permission_needed">Aviseringsbehörighet krävs för påminnelser</string>
 </resources>

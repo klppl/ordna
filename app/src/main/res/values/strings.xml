@@ -117,4 +117,21 @@
     <string name="settings_layout_comfortable">Comfortable</string>
     <string name="settings_layout_default">Default</string>
     <string name="settings_layout_compact">Compact</string>
+
+    <!-- Reminders -->
+    <string name="settings_section_reminders">Reminders</string>
+    <string name="reminder_master_toggle">Task reminders</string>
+    <string name="reminder_master_subtitle">Get reminded to check your tasks</string>
+    <string name="reminder_morning">Morning</string>
+    <string name="reminder_midday">Midday</string>
+    <string name="reminder_evening">Evening</string>
+    <string name="reminder_channel_name">Task Reminders</string>
+    <string name="reminder_title_morning">Good morning</string>
+    <string name="reminder_title_midday">Good afternoon</string>
+    <string name="reminder_title_evening">Good evening</string>
+    <plurals name="reminder_body">
+        <item quantity="one">You have %1$d task left today</item>
+        <item quantity="other">You have %1$d tasks left today</item>
+    </plurals>
+    <string name="reminder_permission_needed">Notification permission required for reminders</string>
 </resources>
