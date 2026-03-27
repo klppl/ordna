@@ -1,5 +1,10 @@
 package com.ordna.android.ui.settings
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,6 +29,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -37,23 +43,32 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.launch
 import com.ordna.android.R
 import com.ordna.android.data.repository.CompletionMethod
 import com.ordna.android.data.repository.LayoutDensity
@@ -91,6 +106,32 @@ fun SettingsScreen(
     val widgetSorting by viewModel.widgetSorting.collectAsState()
     val streak by viewModel.streak.collectAsState()
 
+    val remindersEnabled by viewModel.remindersEnabled.collectAsState()
+    val morningEnabled by viewModel.reminderMorningEnabled.collectAsState()
+    val morningHour by viewModel.reminderMorningHour.collectAsState()
+    val morningMinute by viewModel.reminderMorningMinute.collectAsState()
+    val middayEnabled by viewModel.reminderMiddayEnabled.collectAsState()
+    val middayHour by viewModel.reminderMiddayHour.collectAsState()
+    val middayMinute by viewModel.reminderMiddayMinute.collectAsState()
+    val eveningEnabled by viewModel.reminderEveningEnabled.collectAsState()
+    val eveningHour by viewModel.reminderEveningHour.collectAsState()
+    val eveningMinute by viewModel.reminderEveningMinute.collectAsState()
+
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val permissionDeniedMsg = stringResource(R.string.reminder_permission_needed)
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            viewModel.setRemindersEnabled(true)
+        } else {
+            scope.launch { snackbarHostState.showSnackbar(permissionDeniedMsg) }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -102,6 +143,7 @@ fun SettingsScreen(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -223,6 +265,60 @@ fun SettingsScreen(
                     shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
                 ) { Text(stringResource(R.string.settings_completion_both)) }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ── Reminders ──
+            SettingSectionHeader(stringResource(R.string.settings_section_reminders))
+
+            SettingToggle(
+                title = stringResource(R.string.reminder_master_toggle),
+                subtitle = stringResource(R.string.reminder_master_subtitle),
+                checked = remindersEnabled,
+                onCheckedChange = { enabled ->
+                    if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        val hasPermission = context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+                            PackageManager.PERMISSION_GRANTED
+                        if (hasPermission) {
+                            viewModel.setRemindersEnabled(true)
+                        } else {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    } else {
+                        viewModel.setRemindersEnabled(enabled)
+                    }
+                },
+            )
+
+            ReminderSlotRow(
+                label = stringResource(R.string.reminder_morning),
+                enabled = remindersEnabled && morningEnabled,
+                masterEnabled = remindersEnabled,
+                hour = morningHour,
+                minute = morningMinute,
+                onToggle = { viewModel.setReminderMorningEnabled(it) },
+                onTimeChange = { h, m -> viewModel.setReminderMorningTime(h, m) },
+            )
+
+            ReminderSlotRow(
+                label = stringResource(R.string.reminder_midday),
+                enabled = remindersEnabled && middayEnabled,
+                masterEnabled = remindersEnabled,
+                hour = middayHour,
+                minute = middayMinute,
+                onToggle = { viewModel.setReminderMiddayEnabled(it) },
+                onTimeChange = { h, m -> viewModel.setReminderMiddayTime(h, m) },
+            )
+
+            ReminderSlotRow(
+                label = stringResource(R.string.reminder_evening),
+                enabled = remindersEnabled && eveningEnabled,
+                masterEnabled = remindersEnabled,
+                hour = eveningHour,
+                minute = eveningMinute,
+                onToggle = { viewModel.setReminderEveningEnabled(it) },
+                onTimeChange = { h, m -> viewModel.setReminderEveningTime(h, m) },
+            )
 
             // Default creation list
             Spacer(modifier = Modifier.height(20.dp))
@@ -526,6 +622,96 @@ private fun SettingLabel(title: String, subtitle: String) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(modifier = Modifier.height(12.dp))
+}
+
+@Composable
+private fun ReminderSlotRow(
+    label: String,
+    enabled: Boolean,
+    masterEnabled: Boolean,
+    hour: Int,
+    minute: Int,
+    onToggle: (Boolean) -> Unit,
+    onTimeChange: (Int, Int) -> Unit,
+) {
+    var showTimePicker by remember { mutableStateOf(false) }
+    val timeText = String.format("%02d:%02d", hour, minute)
+    val alpha = if (masterEnabled) 1f else 0.4f
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier
+                .weight(1f)
+                .graphicsLayer { this.alpha = alpha },
+        )
+        Text(
+            text = timeText,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (enabled) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .clickable(enabled = masterEnabled) { showTimePicker = true }
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .graphicsLayer { this.alpha = alpha },
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Switch(
+            checked = enabled,
+            onCheckedChange = onToggle,
+            enabled = masterEnabled,
+        )
+    }
+
+    if (showTimePicker) {
+        ReminderTimePicker(
+            initialHour = hour,
+            initialMinute = minute,
+            onConfirm = { h, m ->
+                onTimeChange(h, m)
+                showTimePicker = false
+            },
+            onDismiss = { showTimePicker = false },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReminderTimePicker(
+    initialHour: Int,
+    initialMinute: Int,
+    onConfirm: (Int, Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val timePickerState = rememberTimePickerState(
+        initialHour = initialHour,
+        initialMinute = initialMinute,
+        is24Hour = true,
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = { onConfirm(timePickerState.hour, timePickerState.minute) }) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cd_back))
+            }
+        },
+        text = {
+            TimePicker(state = timePickerState)
+        },
+    )
 }
 
 @Composable
