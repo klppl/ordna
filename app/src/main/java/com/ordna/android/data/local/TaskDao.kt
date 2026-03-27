@@ -39,6 +39,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE status = 'needsAction' AND due IS NOT NULL AND due <= :today")
     suspend fun getActiveTasks(today: LocalDate): List<TaskEntity>
 
+    @Query("SELECT COUNT(*) FROM tasks WHERE status = 'needsAction' AND due IS NOT NULL AND due <= :today")
+    suspend fun getActiveTaskCount(today: LocalDate): Int
+
     @Query("SELECT * FROM tasks WHERE status = 'completed'")
     suspend fun getCompletedTasksList(): List<TaskEntity>
 
