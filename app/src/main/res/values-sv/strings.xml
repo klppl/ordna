@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Widget -->
-    <string name="widget_name">Taskig Idag</string>
+    <string name="widget_name">Ordna Idag</string>
     <string name="widget_description">Dagens uppgifter i en överblick</string>
-    <string name="widget_today">IDAG</string>
+    <string name="widget_today">Ordna</string>
     <string name="widget_done_count">%1$d/%2$d klara</string>
     <string name="widget_no_tasks">Inga uppgifter idag</string>
     <string name="widget_overdue">försenad</string>
     <string name="widget_refresh">Uppdatera</string>
 
     <!-- Sign-in -->
-    <string name="sign_in_subtitle">Dagens uppgifter, i en överblick</string>
+    <string name="sign_in_subtitle">Idag. Inget mer.</string>
     <string name="sign_in_button">Logga in med Google</string>
     <string name="sign_in_error_no_account">Kunde inte hitta Google-konto</string>
     <string name="sign_in_cancelled">Inloggning avbruten</string>
@@ -39,9 +39,19 @@
     <string name="cd_complete">Slutför</string>
     <string name="cd_uncomplete">Ångra slutförd</string>
 
+    <!-- Task creation -->
+    <string name="create_task_hint">Ny uppgift</string>
+    <string name="create_task_error">Kunde inte skapa uppgift</string>
+    <string name="cd_add_task">Lägg till uppgift</string>
+
     <!-- Settings -->
     <string name="settings_title">Inställningar</string>
     <string name="settings_section_display">App</string>
+    <string name="settings_language_title">Spr\u00e5k</string>
+    <string name="settings_language_subtitle">Appens visningsspr\u00e5k</string>
+    <string name="settings_language_system">System</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_language_sv">Svenska</string>
     <string name="settings_theme_title">Tema</string>
     <string name="settings_theme_subtitle">Färgpalett för app och widget</string>
     <string name="theme_system">System</string>
@@ -52,17 +62,19 @@
     <string name="theme_dracula">Dracula</string>
     <string name="theme_kanagawa">Kanagawa</string>
     <string name="theme_oxocarbon">Oxocarbon</string>
-    <string name="settings_grouping_title">Gruppering</string>
+    <string name="settings_grouping_title">Gruppera efter</string>
     <string name="settings_grouping_subtitle">Hur uppgifter organiseras inom varje sektion</string>
-    <string name="settings_grouping_flat">Platt</string>
+    <string name="settings_grouping_flat">Ingen gruppering</string>
     <string name="settings_grouping_by_list">Per lista</string>
-    <string name="settings_list_order_title">Listordning</string>
-    <string name="settings_list_order_subtitle">Vilken lista visas först i platt läge</string>
+    <string name="settings_list_order_title">Sortera listor</string>
+    <string name="settings_list_order_subtitle">Vilken lista visas först utan gruppering</string>
     <string name="settings_completion_title">Slutför uppgifter med</string>
     <string name="settings_completion_subtitle">Hur du markerar uppgifter som klara</string>
     <string name="settings_completion_tap">Tryck</string>
     <string name="settings_completion_swipe">Svep</string>
     <string name="settings_completion_both">Båda</string>
+    <string name="settings_create_list_title">Standardlista</string>
+    <string name="settings_create_list_subtitle">Var nya uppgifter skapas</string>
 
     <!-- Widget settings -->
     <string name="settings_section_widget">Widget</string>
@@ -97,7 +109,7 @@
     <string name="settings_streak_none">Ingen svit ännu</string>
 
     <!-- Layout density (shared) -->
-    <string name="settings_layout_title">Layouttäthet</string>
+    <string name="settings_layout_title">Visningsläge</string>
     <string name="settings_layout_subtitle">Radavstånd och textstorlek</string>
     <string name="settings_layout_comfortable">Bekväm</string>
     <string name="settings_layout_default">Standard</string>

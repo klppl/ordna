@@ -18,6 +18,7 @@ googleApiClient = "2.7.0"
 googleHttpClientGson = "1.45.1"
 googleApiServicesTasks = "v1-rev20250302-2.0.0"
 datastorePreferences = "1.1.1"
+appcompat = "1.7.0"
 
 [libraries]
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -64,6 +65,9 @@ play-services-auth = { group = "com.google.android.gms", name = "play-services-a
 google-api-client-android = { group = "com.google.api-client", name = "google-api-client-android", version.ref = "googleApiClient" }
 google-http-client-gson = { group = "com.google.http-client", name = "google-http-client-gson", version.ref = "googleHttpClientGson" }
 google-api-services-tasks = { group = "com.google.apis", name = "google-api-services-tasks", version.ref = "googleApiServicesTasks" }
+
+# AppCompat
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 
 # DataStore
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }

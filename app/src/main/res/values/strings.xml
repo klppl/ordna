@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Taskig</string>
+    <string name="app_name">Ordna</string>
 
     <!-- Widget -->
-    <string name="widget_name">Taskig Today</string>
+    <string name="widget_name">Ordna Today</string>
     <string name="widget_description">Your daily tasks at a glance</string>
-    <string name="widget_today">TODAY</string>
+    <string name="widget_today">Ordna</string>
     <string name="widget_done_count">%1$d/%2$d done</string>
     <string name="widget_no_tasks">No tasks today</string>
     <string name="widget_overdue">overdue</string>
     <string name="widget_refresh">Refresh</string>
 
     <!-- Sign-in -->
-    <string name="sign_in_title">Taskig</string>
-    <string name="sign_in_subtitle">Your daily tasks, at a glance</string>
+    <string name="sign_in_title">Ordna</string>
+    <string name="sign_in_subtitle">Today. Nothing more.</string>
     <string name="sign_in_button">Sign in with Google</string>
     <string name="sign_in_error_no_account">Could not determine Google account</string>
     <string name="sign_in_cancelled">Sign-in cancelled</string>
@@ -42,9 +42,19 @@
     <string name="cd_complete">Complete</string>
     <string name="cd_uncomplete">Uncomplete</string>
 
+    <!-- Task creation -->
+    <string name="create_task_hint">New task</string>
+    <string name="create_task_error">Couldn\'t create task</string>
+    <string name="cd_add_task">Add task</string>
+
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_section_display">App</string>
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_subtitle">App display language</string>
+    <string name="settings_language_system">System</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_language_sv">Svenska</string>
     <string name="settings_theme_title">Theme</string>
     <string name="settings_theme_subtitle">Color palette for app and widget</string>
     <string name="theme_system">System</string>
@@ -66,6 +76,8 @@
     <string name="settings_completion_tap">Tap</string>
     <string name="settings_completion_swipe">Swipe</string>
     <string name="settings_completion_both">Both</string>
+    <string name="settings_create_list_title">Default list</string>
+    <string name="settings_create_list_subtitle">Where new tasks are added</string>
 
     <!-- Widget settings -->
     <string name="settings_section_widget">Widget</string>

@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "taskig-android"
+rootProject.name = "ordna-android"
 include(":app")
