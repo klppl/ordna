@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.lifecycleScope
 import com.ordna.android.data.repository.SettingsRepository
+import com.ordna.android.data.repository.TaskRepository
 import com.ordna.android.ui.navigation.OrdnaNavGraph
 import com.ordna.android.ui.theme.AppTheme
 import com.ordna.android.ui.theme.OrdnaTheme
@@ -24,6 +25,7 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity() {
 
     @Inject lateinit var settingsRepository: SettingsRepository
+    @Inject lateinit var taskRepository: TaskRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +38,14 @@ class MainActivity : AppCompatActivity() {
                 AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(saved))
             }
         }
+
+        // Trigger sync if launched from notification
+        if (intent?.getBooleanExtra("SYNC_ON_LAUNCH", false) == true) {
+            lifecycleScope.launch {
+                try { taskRepository.sync() } catch (_: Exception) { }
+            }
+        }
+
         setContent {
             val themeName by settingsRepository.appTheme.collectAsState(initial = "SYSTEM")
             val appTheme = AppTheme.entries.find { it.name == themeName } ?: AppTheme.SYSTEM
