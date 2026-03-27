@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ordna.android.data.remote.GoogleTasksApi
+import com.ordna.android.data.sync.ReminderScheduler
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.ordna.android.data.repository.CompletionMethod
@@ -31,6 +32,7 @@ class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val taskRepository: TaskRepository,
     private val api: GoogleTasksApi,
+    private val reminderScheduler: ReminderScheduler,
 ) : AndroidViewModel(application) {
 
     val language: StateFlow<String> = settingsRepository.language
@@ -92,6 +94,37 @@ class SettingsViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val streak: StateFlow<Int> = settingsRepository.streak
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    // -- Reminders --
+    val remindersEnabled: StateFlow<Boolean> = settingsRepository.remindersEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    val reminderMorningEnabled: StateFlow<Boolean> = settingsRepository.reminderMorningEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
+    val reminderMorningHour: StateFlow<Int> = settingsRepository.reminderMorningHour
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 8)
+
+    val reminderMorningMinute: StateFlow<Int> = settingsRepository.reminderMorningMinute
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    val reminderMiddayEnabled: StateFlow<Boolean> = settingsRepository.reminderMiddayEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
+    val reminderMiddayHour: StateFlow<Int> = settingsRepository.reminderMiddayHour
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 12)
+
+    val reminderMiddayMinute: StateFlow<Int> = settingsRepository.reminderMiddayMinute
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    val reminderEveningEnabled: StateFlow<Boolean> = settingsRepository.reminderEveningEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
+    val reminderEveningHour: StateFlow<Int> = settingsRepository.reminderEveningHour
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 18)
+
+    val reminderEveningMinute: StateFlow<Int> = settingsRepository.reminderEveningMinute
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     fun setLanguage(lang: String) {
@@ -204,6 +237,80 @@ class SettingsViewModel @Inject constructor(
             current.removeAt(index)
             current.add(newIndex, listId)
             settingsRepository.setListOrder(current)
+        }
+    }
+
+    fun setRemindersEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setRemindersEnabled(enabled)
+            if (enabled) reminderScheduler.scheduleAll()
+            else reminderScheduler.cancelAll()
+        }
+    }
+
+    fun setReminderMorningEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setReminderMorningEnabled(enabled)
+            if (enabled) {
+                val hour = reminderMorningHour.value
+                val minute = reminderMorningMinute.value
+                reminderScheduler.scheduleSlot(ReminderScheduler.SLOT_MORNING, hour, minute)
+            } else {
+                reminderScheduler.cancelSlot(ReminderScheduler.SLOT_MORNING)
+            }
+        }
+    }
+
+    fun setReminderMorningTime(hour: Int, minute: Int) {
+        viewModelScope.launch {
+            settingsRepository.setReminderMorningTime(hour, minute)
+            if (remindersEnabled.value && reminderMorningEnabled.value) {
+                reminderScheduler.scheduleSlot(ReminderScheduler.SLOT_MORNING, hour, minute)
+            }
+        }
+    }
+
+    fun setReminderMiddayEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setReminderMiddayEnabled(enabled)
+            if (enabled) {
+                val hour = reminderMiddayHour.value
+                val minute = reminderMiddayMinute.value
+                reminderScheduler.scheduleSlot(ReminderScheduler.SLOT_MIDDAY, hour, minute)
+            } else {
+                reminderScheduler.cancelSlot(ReminderScheduler.SLOT_MIDDAY)
+            }
+        }
+    }
+
+    fun setReminderMiddayTime(hour: Int, minute: Int) {
+        viewModelScope.launch {
+            settingsRepository.setReminderMiddayTime(hour, minute)
+            if (remindersEnabled.value && reminderMiddayEnabled.value) {
+                reminderScheduler.scheduleSlot(ReminderScheduler.SLOT_MIDDAY, hour, minute)
+            }
+        }
+    }
+
+    fun setReminderEveningEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setReminderEveningEnabled(enabled)
+            if (enabled) {
+                val hour = reminderEveningHour.value
+                val minute = reminderEveningMinute.value
+                reminderScheduler.scheduleSlot(ReminderScheduler.SLOT_EVENING, hour, minute)
+            } else {
+                reminderScheduler.cancelSlot(ReminderScheduler.SLOT_EVENING)
+            }
+        }
+    }
+
+    fun setReminderEveningTime(hour: Int, minute: Int) {
+        viewModelScope.launch {
+            settingsRepository.setReminderEveningTime(hour, minute)
+            if (remindersEnabled.value && reminderEveningEnabled.value) {
+                reminderScheduler.scheduleSlot(ReminderScheduler.SLOT_EVENING, hour, minute)
+            }
         }
     }
 
