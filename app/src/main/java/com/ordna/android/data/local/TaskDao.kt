@@ -36,6 +36,9 @@ interface TaskDao {
     )
     fun getCompletedTasks(): Flow<List<TaskEntity>>
 
+    @Query("SELECT * FROM tasks WHERE id = :taskId LIMIT 1")
+    suspend fun getTaskById(taskId: String): TaskEntity?
+
     @Query("SELECT * FROM tasks WHERE status = 'needsAction' AND due IS NOT NULL AND due <= :today")
     suspend fun getActiveTasks(today: LocalDate): List<TaskEntity>
 

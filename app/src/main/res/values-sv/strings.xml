@@ -3,6 +3,9 @@
     <!-- Widget -->
     <string name="widget_name">Ordna Idag</string>
     <string name="widget_description">Dagens uppgifter i en överblick</string>
+    <string name="counter_widget_description">Räknare för återstående uppgifter</string>
+    <string name="counter_widget_left">kvar</string>
+    <string name="counter_widget_done">Klart</string>
     <string name="widget_today">Ordna</string>
     <string name="widget_done_count">%1$d/%2$d klara</string>
     <string name="widget_no_tasks">Inga uppgifter idag</string>
@@ -107,6 +110,11 @@
     <string name="settings_streak_subtitle">Dagar i rad med alla uppgifter slutförda</string>
     <string name="settings_streak_value">%1$d dagar</string>
     <string name="settings_streak_none">Ingen svit ännu</string>
+
+    <!-- Credits -->
+    <string name="settings_made_by">Skapad av klppl</string>
+    <string name="settings_github">GitHub</string>
+    <string name="settings_buy_coffee">Bjud mig på en kaffe</string>
 
     <!-- Layout density (shared) -->
     <string name="settings_layout_title">Visningsläge</string>

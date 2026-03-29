@@ -5,6 +5,9 @@
     <!-- Widget -->
     <string name="widget_name">Ordna Today</string>
     <string name="widget_description">Your daily tasks at a glance</string>
+    <string name="counter_widget_description">Tasks remaining counter</string>
+    <string name="counter_widget_left">left</string>
+    <string name="counter_widget_done">All done</string>
     <string name="widget_today">Ordna</string>
     <string name="widget_done_count">%1$d/%2$d done</string>
     <string name="widget_no_tasks">No tasks today</string>
@@ -110,6 +113,11 @@
     <string name="settings_streak_subtitle">Consecutive days with all tasks completed</string>
     <string name="settings_streak_value">%1$d days</string>
     <string name="settings_streak_none">No streak yet</string>
+
+    <!-- Credits -->
+    <string name="settings_made_by">Made by klppl</string>
+    <string name="settings_github">GitHub</string>
+    <string name="settings_buy_coffee">Buy me a coffee</string>
 
     <!-- Layout density (shared) -->
     <string name="settings_layout_title">Layout density</string>

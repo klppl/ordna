@@ -16,11 +16,16 @@ import kotlinx.coroutines.coroutineScope
 suspend fun updateAllWidgets(context: Context) {
     val appContext = context.applicationContext
     val manager = GlanceAppWidgetManager(appContext)
-    val glanceIds = manager.getGlanceIds(OrdnaWidget::class.java)
 
     coroutineScope {
-        glanceIds.map { glanceId ->
-            async { OrdnaWidget().update(appContext, glanceId) }
-        }.awaitAll()
+        val mainIds = manager.getGlanceIds(OrdnaWidget::class.java)
+        val counterIds = manager.getGlanceIds(CounterWidget::class.java)
+
+        val jobs = mainIds.map { id ->
+            async { OrdnaWidget().update(appContext, id) }
+        } + counterIds.map { id ->
+            async { CounterWidget().update(appContext, id) }
+        }
+        jobs.awaitAll()
     }
 }

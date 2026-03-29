@@ -19,6 +19,7 @@ import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.CheckBox
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.LinearProgressIndicator
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
@@ -57,6 +58,7 @@ import com.ordna.android.data.repository.WidgetSettings
 import com.ordna.android.data.repository.WidgetSorting
 import com.ordna.android.ui.theme.AppTheme
 import com.ordna.android.ui.theme.appThemeColors
+import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 
 private val DefaultOverdueColor = Color(0xFFD32F2F)
@@ -67,23 +69,25 @@ class OrdnaWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        // Capture references for Flow collection inside provideContent.
-        // These are stable objects — safe to capture in the closure.
         val dao = TaskDatabase.getInstance(context).taskDao()
         val today = LocalDate.now()
         val settingsFlow = SettingsRepository.widgetSettingsFlow(context)
         val listOrderFlow = SettingsRepository.listOrderFlow(context)
 
+        // Snapshot data eagerly so the first frame renders real content
+        // instead of empty lists. Flows still drive live updates afterwards.
+        val initialOverdue = dao.getOverdueTasks(today).first()
+        val initialToday = dao.getTodayTasks(today).first()
+        val initialCompleted = dao.getCompletedTasks().first()
+        val initialSettings = settingsFlow.first()
+        val initialListOrder = listOrderFlow.first()
+
         provideContent {
-            // Collect all data reactively from the source of truth (Room + DataStore).
-            // Room Flows re-emit automatically when the underlying table changes.
-            // DataStore Flows re-emit when any preference changes.
-            // No in-memory bridge needed — Glance recomposes on every emission.
-            val overdueTasks by dao.getOverdueTasks(today).collectAsState(initial = emptyList())
-            val todayTasks by dao.getTodayTasks(today).collectAsState(initial = emptyList())
-            val completedTasksAll by dao.getCompletedTasks().collectAsState(initial = emptyList())
-            val widgetSettings by settingsFlow.collectAsState(initial = WidgetSettings())
-            val listOrder by listOrderFlow.collectAsState(initial = emptyList())
+            val overdueTasks by dao.getOverdueTasks(today).collectAsState(initial = initialOverdue)
+            val todayTasks by dao.getTodayTasks(today).collectAsState(initial = initialToday)
+            val completedTasksAll by dao.getCompletedTasks().collectAsState(initial = initialCompleted)
+            val widgetSettings by settingsFlow.collectAsState(initial = initialSettings)
+            val listOrder by listOrderFlow.collectAsState(initial = initialListOrder)
 
             // Derive display properties from current settings
             val appTheme = AppTheme.entries.find { it.name == widgetSettings.theme } ?: AppTheme.SYSTEM
@@ -220,16 +224,12 @@ private fun WidgetContent(
                 val progress = completedCount.toFloat() / totalCount
                 val trackColor = if (isLight) ColorProvider(Color(0xFFE0E0E0)) else ColorProvider(Color(0xFF444444))
 
-                Row(
-                    modifier = GlanceModifier.fillMaxWidth().height(6.dp).cornerRadius(3.dp).background(trackColor),
-                ) {
-                    if (progress > 0f) {
-                        Spacer(modifier = GlanceModifier.height(6.dp).defaultWeight().cornerRadius(3.dp).background(primaryBarColor))
-                    }
-                    if (progress < 1f) {
-                        Spacer(modifier = GlanceModifier.height(6.dp).defaultWeight())
-                    }
-                }
+                LinearProgressIndicator(
+                    progress = progress,
+                    modifier = GlanceModifier.fillMaxWidth().height(6.dp),
+                    color = primaryBarColor,
+                    backgroundColor = trackColor,
+                )
                 Spacer(modifier = GlanceModifier.height(10.dp))
             }
 
@@ -384,12 +384,8 @@ class ToggleTaskAction : ActionCallback {
         val listId = parameters[listIdKey] ?: return
 
         val dao = TaskDatabase.getInstance(context).taskDao()
-        val today = LocalDate.now()
 
-        // Find the task in Room to determine current status
-        val allActive = dao.getActiveTasks(today)
-        val allCompleted = dao.getCompletedTasksList()
-        val task = (allActive + allCompleted).find { it.id == taskId } ?: return
+        val task = dao.getTaskById(taskId) ?: return
 
         val isCompleting = task.status == "needsAction"
         val newStatus = if (isCompleting) "completed" else "needsAction"

@@ -5,32 +5,25 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Stylized "T" letterform with a task-line crossing it -->
+    <!-- Daily progress line with position marker -->
 
-    <!-- Vertical stem of T -->
+    <!-- Completed portion (warm terracotta) -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M50,32 L58,32 L58,76 L50,76 Z" />
-
-    <!-- Horizontal bar of T -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M34,32 L74,32 L74,39 L34,39 Z" />
-
-    <!-- Strikethrough line (completed task) — slightly angled for energy -->
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="3"
+        android:strokeColor="#E8845C"
+        android:strokeWidth="3.5"
         android:strokeLineCap="round"
-        android:pathData="M32,58 L76,54" />
+        android:pathData="M30,54 L61,54" />
 
-    <!-- Small checkmark at the end of the strikethrough -->
+    <!-- Remaining portion (muted warm gray) -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M70,51 L74,55 L82,44"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="3"
+        android:strokeColor="#7A6E63"
+        android:strokeWidth="3.5"
         android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:pathData="M61,54 L78,54" />
+
+    <!-- Progress dot -->
+    <path
+        android:fillColor="#E8845C"
+        android:pathData="M61,54 m-6.5,0 a6.5,6.5 0 1,1 13,0 a6.5,6.5 0 1,1 -13,0" />
 
 </vector>
