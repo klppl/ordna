@@ -168,6 +168,14 @@ class TodayViewModel @Inject constructor(
         }
     }
 
+    fun updateTaskNotes(task: TaskEntity, notes: String?) {
+        viewModelScope.launch {
+            repository.updateTaskNotes(task, notes).onFailure { e ->
+                _error.value = e.localizedMessage ?: getString(R.string.error_task_update_failed)
+            }
+        }
+    }
+
     fun postponeTask(task: TaskEntity, newDue: java.time.LocalDate) {
         viewModelScope.launch {
             repository.postponeTask(task, newDue).onFailure { e ->

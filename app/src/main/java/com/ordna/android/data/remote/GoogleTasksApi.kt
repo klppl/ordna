@@ -92,12 +92,28 @@ class GoogleTasksApi @Inject constructor(
         listId: String,
         title: String,
         due: java.time.LocalDate? = null,
+        notes: String? = null,
     ): com.google.api.services.tasks.model.Task = withContext(Dispatchers.IO) {
         val task = Task().setTitle(title).setStatus("needsAction")
         if (due != null) {
             task.due = "${due}T00:00:00.000Z"
         }
+        if (!notes.isNullOrBlank()) {
+            task.notes = notes
+        }
         buildService(accountEmail).tasks().insert(listId, task).execute()
+    }
+
+    suspend fun updateTaskNotes(
+        accountEmail: String,
+        listId: String,
+        taskId: String,
+        notes: String?,
+    ) = withContext(Dispatchers.IO) {
+        val service = buildService(accountEmail)
+        val task = service.tasks().get(listId, taskId).execute()
+        task.notes = notes
+        service.tasks().update(listId, taskId, task).execute()
     }
 
     suspend fun updateTaskDue(

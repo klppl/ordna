@@ -104,6 +104,21 @@ class TaskRepository @Inject constructor(
         }
     }
 
+    suspend fun updateTaskNotes(task: TaskEntity, notes: String?): Result<Unit> = runCatching {
+        val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
+
+        // Optimistic update
+        taskDao.updateTaskNotes(task.id, notes)
+
+        try {
+            api.updateTaskNotes(email, task.listId, task.id, notes)
+        } catch (e: Exception) {
+            // Revert on failure
+            taskDao.updateTaskNotes(task.id, task.notes)
+            throw e
+        }
+    }
+
     suspend fun createTask(title: String, listId: String, listTitle: String): Result<Unit> = runCatching {
         val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
         val today = LocalDate.now()
@@ -209,6 +224,7 @@ class TaskRepository @Inject constructor(
                                 listId = listId,
                                 listTitle = listTitle,
                                 listColor = listColor,
+                                notes = task.notes,
                                 position = task.position ?: "",
                                 updated = GoogleTasksApi.parseCompletedAt(task.updated)
                                     ?: Instant.now(),

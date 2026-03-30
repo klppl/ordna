@@ -16,6 +16,7 @@ data class TaskEntity(
     val listId: String,
     val listTitle: String,
     val listColor: Int,
+    val notes: String? = null,
     val position: String,
     val updated: Instant,
 ) {

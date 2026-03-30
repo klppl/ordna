@@ -33,6 +33,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
@@ -132,6 +133,7 @@ fun TodayScreen(
 
     // Postpone dialog state
     var postponeTask by remember { mutableStateOf<TaskEntity?>(null) }
+    var detailTask by remember { mutableStateOf<TaskEntity?>(null) }
     var showCreateSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.authExpired) {
@@ -276,6 +278,7 @@ fun TodayScreen(
                                 isOverdue = true,
                                 onToggle = { viewModel.toggleTask(it) },
                                 onPostpone = { postponeTask = it },
+                                onTap = { detailTask = it },
                             )
                         }
                     }
@@ -296,6 +299,7 @@ fun TodayScreen(
                             layoutDensity = state.layoutDensity,
                             onToggle = { viewModel.toggleTask(it) },
                             onPostpone = { postponeTask = it },
+                            onTap = { detailTask = it },
                         )
                     }
 
@@ -319,6 +323,7 @@ fun TodayScreen(
                             layoutDensity = state.layoutDensity,
                             isCompleted = true,
                             onToggle = { viewModel.toggleTask(it) },
+                            onTap = { detailTask = it },
                         )
                     }
 
@@ -368,6 +373,17 @@ fun TodayScreen(
         )
     }
 
+    // Task detail sheet
+    detailTask?.let { task ->
+        TaskDetailSheet(
+            task = task,
+            onDismiss = { detailTask = null },
+            onNotesChanged = { notes ->
+                viewModel.updateTaskNotes(task, notes)
+            },
+        )
+    }
+
     if (showCreateSheet) {
         val availableLists by viewModel.availableLists.collectAsState()
         val defaultListId by viewModel.createListId.collectAsState()
@@ -396,6 +412,7 @@ private fun LazyListScope.taskSection(
     isCompleted: Boolean = false,
     onToggle: (TaskEntity) -> Unit,
     onPostpone: ((TaskEntity) -> Unit)? = null,
+    onTap: ((TaskEntity) -> Unit)? = null,
 ) {
     if (groupByList) {
         val grouped = tasks.groupBy { it.listTitle }
@@ -413,6 +430,7 @@ private fun LazyListScope.taskSection(
                     task = task,
                     onToggle = { onToggle(task) },
                     onPostpone = onPostpone?.let { { it(task) } },
+                    onTap = onTap?.let { { it(task) } },
                     completionMethod = completionMethod,
                     layoutDensity = layoutDensity,
                     isOverdue = isOverdue,
@@ -427,6 +445,7 @@ private fun LazyListScope.taskSection(
                 task = task,
                 onToggle = { onToggle(task) },
                 onPostpone = onPostpone?.let { { it(task) } },
+                onTap = onTap?.let { { it(task) } },
                 completionMethod = completionMethod,
                 layoutDensity = layoutDensity,
                 isOverdue = isOverdue,
@@ -444,6 +463,7 @@ private fun SwipeableTaskRow(
     task: TaskEntity,
     onToggle: () -> Unit,
     onPostpone: (() -> Unit)? = null,
+    onTap: (() -> Unit)? = null,
     completionMethod: CompletionMethod,
     layoutDensity: LayoutDensity,
     isOverdue: Boolean = false,
@@ -658,6 +678,7 @@ private fun SwipeableTaskRow(
             TaskRow(
                 task = task,
                 onToggle = onToggle,
+                onTap = onTap,
                 completionMethod = completionMethod,
                 layoutDensity = layoutDensity,
                 isOverdue = isOverdue,
@@ -670,6 +691,7 @@ private fun SwipeableTaskRow(
         TaskRow(
             task = task,
             onToggle = onToggle,
+            onTap = onTap,
             completionMethod = completionMethod,
             layoutDensity = layoutDensity,
             isOverdue = isOverdue,
@@ -683,6 +705,7 @@ private fun SwipeableTaskRow(
 private fun TaskRow(
     task: TaskEntity,
     onToggle: () -> Unit,
+    onTap: (() -> Unit)? = null,
     completionMethod: CompletionMethod,
     layoutDensity: LayoutDensity,
     isOverdue: Boolean = false,
@@ -711,6 +734,7 @@ private fun TaskRow(
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
+            .then(if (onTap != null) Modifier.clickable { onTap() } else Modifier)
             .padding(
                 start = if (showCheckbox) 8.dp else 16.dp,
                 end = 8.dp,
@@ -746,6 +770,16 @@ private fun TaskRow(
                 .weight(1f)
                 .padding(vertical = if (showCheckbox) 0.dp else noCheckboxVerticalPad),
         )
+
+        if (!task.notes.isNullOrBlank()) {
+            Spacer(modifier = Modifier.width(4.dp))
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Notes,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            )
+        }
 
         if (showBadge) {
             Spacer(modifier = Modifier.width(8.dp))
@@ -904,6 +938,71 @@ private fun AllDoneBanner(streak: Int) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TaskDetailSheet(
+    task: TaskEntity,
+    onDismiss: () -> Unit,
+    onNotesChanged: (String?) -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var notesText by remember(task.id) { mutableStateOf(task.notes ?: "") }
+    val dayFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+
+    ModalBottomSheet(
+        onDismissRequest = {
+            val newNotes = notesText.trim().ifBlank { null }
+            if (newNotes != task.notes) {
+                onNotesChanged(newNotes)
+            }
+            onDismiss()
+        },
+        sheetState = sheetState,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+        ) {
+            // Title
+            Text(
+                text = task.title,
+                style = MaterialTheme.typography.titleLarge,
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            // List badge + due date
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ListBadge(listTitle = task.listTitle, color = Color(task.listColor))
+                task.due?.let { due ->
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = stringResource(R.string.task_detail_due, due.format(dayFormat)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            // Notes field
+            OutlinedTextField(
+                value = notesText,
+                onValueChange = { notesText = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = {
+                    Text(stringResource(R.string.task_detail_notes_hint))
+                },
+                minLines = 3,
+                maxLines = 8,
+            )
         }
     }
 }

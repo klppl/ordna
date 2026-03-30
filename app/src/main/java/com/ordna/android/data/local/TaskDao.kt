@@ -57,6 +57,9 @@ interface TaskDao {
     @Query("UPDATE tasks SET due = :due WHERE id = :taskId")
     suspend fun updateTaskDue(taskId: String, due: LocalDate)
 
+    @Query("UPDATE tasks SET notes = :notes WHERE id = :taskId")
+    suspend fun updateTaskNotes(taskId: String, notes: String?)
+
     @Query("DELETE FROM tasks WHERE id NOT IN (:ids) AND id NOT LIKE 'temp-%'")
     suspend fun deleteTasksNotIn(ids: List<String>)
 
