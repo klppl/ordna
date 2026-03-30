@@ -279,8 +279,8 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setReminderMorningTime(hour: Int, minute: Int) {
         context.settingsDataStore.edit {
-            it[reminderMorningHourKey] = hour
-            it[reminderMorningMinuteKey] = minute
+            it[reminderMorningHourKey] = hour.coerceIn(0, 23)
+            it[reminderMorningMinuteKey] = minute.coerceIn(0, 59)
         }
     }
 
@@ -302,8 +302,8 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setReminderMiddayTime(hour: Int, minute: Int) {
         context.settingsDataStore.edit {
-            it[reminderMiddayHourKey] = hour
-            it[reminderMiddayMinuteKey] = minute
+            it[reminderMiddayHourKey] = hour.coerceIn(0, 23)
+            it[reminderMiddayMinuteKey] = minute.coerceIn(0, 59)
         }
     }
 
@@ -325,8 +325,8 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setReminderEveningTime(hour: Int, minute: Int) {
         context.settingsDataStore.edit {
-            it[reminderEveningHourKey] = hour
-            it[reminderEveningMinuteKey] = minute
+            it[reminderEveningHourKey] = hour.coerceIn(0, 23)
+            it[reminderEveningMinuteKey] = minute.coerceIn(0, 59)
         }
     }
 

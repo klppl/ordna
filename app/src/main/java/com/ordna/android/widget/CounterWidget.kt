@@ -2,6 +2,8 @@ package com.ordna.android.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,13 +50,25 @@ class CounterWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val dao = TaskDatabase.getInstance(context).taskDao()
         val today = LocalDate.now()
-        val settings = SettingsRepository.widgetSettingsFlow(context).first()
+        val settingsFlow = SettingsRepository.widgetSettingsFlow(context)
 
-        val activeCount = dao.getActiveTaskCount(today)
-        val completedCount = dao.getCompletedTasksList().size
-        val totalCount = activeCount + completedCount
+        // Snapshot for instant first frame
+        val initialOverdue = dao.getOverdueTasks(today).first()
+        val initialToday = dao.getTodayTasks(today).first()
+        val initialCompleted = dao.getCompletedTasks().first()
+        val initialSettings = settingsFlow.first()
 
         provideContent {
+            // Reactive Flows keep widget in sync when composition is alive
+            val overdueTasks by dao.getOverdueTasks(today).collectAsState(initial = initialOverdue)
+            val todayTasks by dao.getTodayTasks(today).collectAsState(initial = initialToday)
+            val completedTasks by dao.getCompletedTasks().collectAsState(initial = initialCompleted)
+            val settings by settingsFlow.collectAsState(initial = initialSettings)
+
+            val activeCount = overdueTasks.size + todayTasks.size
+            val completedCount = completedTasks.size
+            val totalCount = activeCount + completedCount
+
             GlanceTheme {
                 CounterContent(
                     remaining = activeCount,

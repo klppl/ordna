@@ -5,7 +5,7 @@
     <!-- Widget -->
     <string name="widget_name">Ordna Today</string>
     <string name="widget_description">Your daily tasks at a glance</string>
-    <string name="counter_widget_description">Tasks remaining counter</string>
+    <string name="counter_widget_description">Remaining tasks counter</string>
     <string name="counter_widget_left">left</string>
     <string name="counter_widget_done">All done</string>
     <string name="widget_today">Ordna</string>
@@ -32,10 +32,18 @@
     <string name="streak_days">%1$d-day streak</string>
     <string name="error_sync_failed">Sync failed</string>
     <string name="error_task_update_failed">Failed to update task</string>
+    <string name="last_sync_just_now">Synced just now</string>
+    <string name="last_sync_minutes">Synced %1$d min ago</string>
+    <string name="last_sync_hours">Synced %1$d h ago</string>
+    <string name="last_sync_long_ago">Synced over a day ago</string>
+
     <string name="postpone_title">Postpone task</string>
     <string name="postpone_today">Today</string>
     <string name="postpone_tomorrow">Tomorrow</string>
+    <string name="postpone_later_this_week">Later this week</string>
+    <string name="postpone_this_weekend">This weekend</string>
     <string name="postpone_next_week">Next week</string>
+    <string name="postpone_pick_date">Pick a date</string>
 
     <!-- Content descriptions -->
     <string name="cd_settings">Settings</string>
@@ -43,7 +51,7 @@
     <string name="cd_collapse">Collapse</string>
     <string name="cd_expand">Expand</string>
     <string name="cd_complete">Complete</string>
-    <string name="cd_uncomplete">Uncomplete</string>
+    <string name="cd_uncomplete">Mark incomplete</string>
 
     <!-- Task creation -->
     <string name="create_task_hint">New task</string>
@@ -69,7 +77,7 @@
     <string name="theme_kanagawa">Kanagawa</string>
     <string name="theme_oxocarbon">Oxocarbon</string>
     <string name="settings_grouping_title">Task grouping</string>
-    <string name="settings_grouping_subtitle">How tasks are organized within each section</string>
+    <string name="settings_grouping_subtitle">How tasks are grouped in each section</string>
     <string name="settings_grouping_flat">Flat</string>
     <string name="settings_grouping_by_list">By list</string>
     <string name="settings_list_order_title">List order</string>
@@ -89,7 +97,7 @@
     <string name="settings_widget_opacity_title">Opacity</string>
     <string name="settings_widget_opacity_subtitle">Background transparency</string>
     <string name="settings_widget_show_completed_title">Show completed</string>
-    <string name="settings_widget_show_completed_subtitle">Display completed tasks in widget</string>
+    <string name="settings_widget_show_completed_subtitle">Show completed tasks in the widget</string>
     <string name="settings_widget_sorting_title">Task sorting</string>
     <string name="settings_widget_sorting_subtitle">How tasks are organized in the widget</string>
     <string name="settings_widget_color_auto">Auto</string>
@@ -118,6 +126,8 @@
     <string name="settings_made_by">Made by klppl</string>
     <string name="settings_github">GitHub</string>
     <string name="settings_buy_coffee">Buy me a coffee</string>
+    <string name="settings_sign_out">Sign out</string>
+    <string name="settings_sign_out_confirm">This will remove your account and all local data. Sign out?</string>
 
     <!-- Layout density (shared) -->
     <string name="settings_layout_title">Layout density</string>
@@ -129,7 +139,7 @@
     <!-- Reminders -->
     <string name="settings_section_reminders">Reminders</string>
     <string name="reminder_master_toggle">Task reminders</string>
-    <string name="reminder_master_subtitle">Get reminded to check your tasks</string>
+    <string name="reminder_master_subtitle">Reminders to check your tasks</string>
     <string name="reminder_morning">Morning</string>
     <string name="reminder_midday">Midday</string>
     <string name="reminder_evening">Evening</string>
@@ -142,4 +152,9 @@
         <item quantity="other">You have %1$d tasks left today</item>
     </plurals>
     <string name="reminder_permission_needed">Notification permission required for reminders</string>
+
+    <!-- Sync failure -->
+    <string name="sync_fail_channel_name">Sync Errors</string>
+    <string name="sync_fail_title">Task update failed</string>
+    <string name="sync_fail_body">Could not sync \"%1$s\" — change was reverted</string>
 </resources>

@@ -33,10 +33,10 @@ class ReminderWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         val slot = inputData.getString("slot") ?: return Result.failure()
 
-        val count = taskDao.getActiveTaskCount(LocalDate.now())
+        val tasks = taskDao.getActiveTasks(LocalDate.now())
 
-        if (count > 0) {
-            postNotification(slot, count)
+        if (tasks.isNotEmpty()) {
+            postNotification(slot, tasks)
         }
 
         // Reschedule for tomorrow
@@ -45,7 +45,8 @@ class ReminderWorker @AssistedInject constructor(
         return Result.success()
     }
 
-    private fun postNotification(slot: String, taskCount: Int) {
+    private fun postNotification(slot: String, tasks: List<com.ordna.android.data.local.TaskEntity>) {
+        val taskCount = tasks.size
         val titleRes = when (slot) {
             ReminderScheduler.SLOT_MORNING -> R.string.reminder_title_morning
             ReminderScheduler.SLOT_MIDDAY -> R.string.reminder_title_midday
@@ -62,6 +63,7 @@ class ReminderWorker @AssistedInject constructor(
 
         val intent = Intent(appContext, MainActivity::class.java).apply {
             putExtra("SYNC_ON_LAUNCH", true)
+            putExtra("NAVIGATE_TODAY", true)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
 
@@ -77,10 +79,17 @@ class ReminderWorker @AssistedInject constructor(
             R.plurals.reminder_body, taskCount, taskCount
         )
 
+        val inboxStyle = NotificationCompat.InboxStyle()
+        tasks.take(5).forEach { inboxStyle.addLine(it.title) }
+        if (taskCount > 5) {
+            inboxStyle.setSummaryText("+${taskCount - 5} more")
+        }
+
         val notification = NotificationCompat.Builder(appContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(body)
+            .setStyle(inboxStyle)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()

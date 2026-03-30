@@ -30,14 +30,25 @@ class OrdnaApplication : Application(), Configuration.Provider {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = getString(R.string.reminder_channel_name)
-            val channel = NotificationChannel(
+            val manager = getSystemService(NotificationManager::class.java)
+
+            val reminderChannel = NotificationChannel(
                 ReminderWorker.CHANNEL_ID,
-                name,
+                getString(R.string.reminder_channel_name),
                 NotificationManager.IMPORTANCE_DEFAULT,
             )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
+            manager.createNotificationChannel(reminderChannel)
+
+            val syncFailChannel = NotificationChannel(
+                SYNC_FAIL_CHANNEL_ID,
+                getString(R.string.sync_fail_channel_name),
+                NotificationManager.IMPORTANCE_LOW,
+            )
+            manager.createNotificationChannel(syncFailChannel)
         }
+    }
+
+    companion object {
+        const val SYNC_FAIL_CHANNEL_ID = "sync_failures"
     }
 }

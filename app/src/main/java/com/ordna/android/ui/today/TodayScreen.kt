@@ -38,7 +38,13 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material.icons.filled.Weekend
+import androidx.compose.material.icons.filled.WorkOutline
+import androidx.compose.material.icons.outlined.WbSunny
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FloatingActionButton
@@ -49,6 +55,9 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,6 +69,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -72,7 +82,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Canvas
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.clipToBounds
@@ -133,27 +148,57 @@ fun TodayScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                ),
                 title = {
-                    Text(
-                        text = LocalDate.now().format(
-                            DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
-                        ),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
+                    if (state.totalCount > 0) {
+                        val progress = state.completedCount.toFloat() / state.totalCount
+                        val trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        val progressColor = MaterialTheme.colorScheme.primary
+
+                        Box(contentAlignment = Alignment.Center) {
+                            Canvas(modifier = Modifier.size(42.dp)) {
+                                val stroke = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
+                                val padding = stroke.width / 2
+                                val arcSize = Size(size.width - stroke.width, size.height - stroke.width)
+                                val topLeft = Offset(padding, padding)
+
+                                drawArc(
+                                    color = trackColor,
+                                    startAngle = -90f,
+                                    sweepAngle = 360f,
+                                    useCenter = false,
+                                    topLeft = topLeft,
+                                    size = arcSize,
+                                    style = stroke,
+                                )
+                                if (progress > 0f) {
+                                    drawArc(
+                                        color = progressColor,
+                                        startAngle = -90f,
+                                        sweepAngle = 360f * progress,
+                                        useCenter = false,
+                                        topLeft = topLeft,
+                                        size = arcSize,
+                                        style = stroke,
+                                    )
+                                }
+                            }
+                            Text(
+                                text = "${state.completedCount}/${state.totalCount}",
+                                style = MaterialTheme.typography.labelMedium,
+                            )
+                        }
+                    }
                 },
                 actions = {
                     if (state.streak > 0) {
                         Text(
                             text = "\uD83D\uDD25${state.streak}",
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(end = 4.dp),
-                        )
-                    }
-                    if (state.totalCount > 0) {
-                        Text(
-                            text = "${state.completedCount}/${state.totalCount}",
-                            style = MaterialTheme.typography.titleMedium,
                         )
                     }
                     IconButton(onClick = onNavigateToSettings) {
@@ -202,20 +247,6 @@ fun TodayScreen(
                         .fillMaxSize()
                         .animateContentSize(),
                 ) {
-                    // Progress bar
-                    if (state.totalCount > 0) {
-                        item(key = "progress") {
-                            val progress = state.completedCount.toFloat() / state.totalCount
-                            LinearProgressIndicator(
-                                progress = { progress },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                            )
-                        }
-                    }
-
                     // All done celebration
                     if (state.allCompleted) {
                         item(key = "all_done") {
@@ -251,11 +282,11 @@ fun TodayScreen(
 
                     // Due Today section
                     if (state.todayTasks.isNotEmpty()) {
-                        item(key = "today_header") {
-                            SectionHeader(
-                                title = stringResource(R.string.section_due_today),
-                                count = state.todayTasks.size,
-                            )
+                        // Breathing room after overdue section
+                        if (state.overdueTasks.isNotEmpty()) {
+                            item(key = "today_spacer") {
+                                Spacer(modifier = Modifier.height(12.dp))
+                            }
                         }
                         taskSection(
                             tasks = state.todayTasks,
@@ -270,6 +301,9 @@ fun TodayScreen(
 
                     // Completed section
                     if (state.completedTasks.isNotEmpty()) {
+                        item(key = "completed_spacer") {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
                         item(key = "completed_header") {
                             SectionHeader(
                                 title = stringResource(R.string.section_completed),
@@ -286,6 +320,31 @@ fun TodayScreen(
                             isCompleted = true,
                             onToggle = { viewModel.toggleTask(it) },
                         )
+                    }
+
+                    state.lastSync?.let { syncTime ->
+                        item(key = "last_sync") {
+                            val now = java.time.Instant.now()
+                            val minutes = java.time.Duration.between(syncTime, now).toMinutes()
+                            val text = when {
+                                minutes < 1 -> stringResource(R.string.last_sync_just_now)
+                                minutes < 60 -> stringResource(R.string.last_sync_minutes, minutes)
+                                else -> {
+                                    val hours = minutes / 60
+                                    if (hours < 24) stringResource(R.string.last_sync_hours, hours)
+                                    else stringResource(R.string.last_sync_long_ago)
+                                }
+                            }
+                            Text(
+                                text = text,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 16.dp),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            )
+                        }
                     }
 
                     item(key = "bottom_spacer") { Spacer(modifier = Modifier.height(88.dp)) }
@@ -662,9 +721,13 @@ private fun TaskRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (showCheckbox) {
+            val haptic = LocalHapticFeedback.current
             Checkbox(
                 checked = isCompleted,
-                onCheckedChange = { onToggle() },
+                onCheckedChange = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onToggle()
+                },
                 colors = if (isOverdue) {
                     CheckboxDefaults.colors(uncheckedColor = LocalSemanticColors.current.overdueRed)
                 } else {
@@ -845,6 +908,7 @@ private fun AllDoneBanner(streak: Int) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PostponeDialog(
     showToday: Boolean,
@@ -852,39 +916,122 @@ private fun PostponeDialog(
     onSelect: (LocalDate) -> Unit,
 ) {
     val today = LocalDate.now()
+    val tomorrow = today.plusDays(1)
+    val laterThisWeek = today.plusDays(2)
+    val thisSaturday = today.with(java.time.temporal.TemporalAdjusters.next(java.time.DayOfWeek.SATURDAY))
+    val nextMonday = today.with(java.time.temporal.TemporalAdjusters.next(java.time.DayOfWeek.MONDAY))
+
+    val dayFormat = DateTimeFormatter.ofPattern("EEE, MMM d")
+
+    // Track whether to show the date picker instead
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = tomorrow.atStartOfDay(java.time.ZoneOffset.UTC)
+                .toInstant().toEpochMilli(),
+        )
+        DatePickerDialog(
+            onDismissRequest = onDismiss,
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val picked = java.time.Instant.ofEpochMilli(millis)
+                            .atZone(java.time.ZoneOffset.UTC)
+                            .toLocalDate()
+                        onSelect(picked)
+                    }
+                }) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        ) {
+            DatePicker(state = datePickerState)
+        }
+        return
+    }
+
+    // Collect options, skipping duplicates
+    data class PostponeOption(
+        val icon: androidx.compose.ui.graphics.vector.ImageVector,
+        val label: String,
+        val subtitle: String,
+        val date: LocalDate,
+    )
+
+    val options = mutableListOf<PostponeOption>()
+
+    if (showToday) {
+        options += PostponeOption(
+            icon = Icons.Default.WbSunny,
+            label = stringResource(R.string.postpone_today),
+            subtitle = today.format(dayFormat),
+            date = today,
+        )
+    }
+
+    options += PostponeOption(
+        icon = Icons.Outlined.WbSunny,
+        label = stringResource(R.string.postpone_tomorrow),
+        subtitle = tomorrow.format(dayFormat),
+        date = tomorrow,
+    )
+
+    // Later this week: only Mon–Wed (so +2 lands on Wed–Fri)
+    val showLaterThisWeek = today.dayOfWeek.value <= 3 // Mon=1, Tue=2, Wed=3
+    if (showLaterThisWeek) {
+        options += PostponeOption(
+            icon = Icons.Default.WorkOutline,
+            label = stringResource(R.string.postpone_later_this_week),
+            subtitle = laterThisWeek.format(dayFormat),
+            date = laterThisWeek,
+        )
+    }
+
+    // This weekend: only if Saturday isn't tomorrow (i.e., not Friday/Sat/Sun)
+    if (thisSaturday != tomorrow && today.dayOfWeek.value <= 5) {
+        options += PostponeOption(
+            icon = Icons.Default.Weekend,
+            label = stringResource(R.string.postpone_this_weekend),
+            subtitle = thisSaturday.format(dayFormat),
+            date = thisSaturday,
+        )
+    }
+
+    // Next week: only if Monday isn't tomorrow (i.e., not Sunday)
+    if (nextMonday != tomorrow) {
+        options += PostponeOption(
+            icon = Icons.Default.CalendarMonth,
+            label = stringResource(R.string.postpone_next_week),
+            subtitle = nextMonday.format(dayFormat),
+            date = nextMonday,
+        )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.DateRange,
-                contentDescription = null,
-                tint = PostponeAmber,
-            )
-        },
         title = { Text(stringResource(R.string.postpone_title)) },
         text = {
             Column {
-                if (showToday) {
-                    TextButton(
-                        onClick = { onSelect(today) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(stringResource(R.string.postpone_today))
-                    }
+                options.forEach { option ->
+                    PostponeRow(
+                        icon = option.icon,
+                        label = option.label,
+                        subtitle = option.subtitle,
+                        onClick = { onSelect(option.date) },
+                    )
                 }
-                TextButton(
-                    onClick = { onSelect(today.plusDays(1)) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.postpone_tomorrow))
-                }
-                TextButton(
-                    onClick = { onSelect(today.with(java.time.DayOfWeek.MONDAY).plusWeeks(1)) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.postpone_next_week))
-                }
+                PostponeRow(
+                    icon = Icons.Default.EditCalendar,
+                    label = stringResource(R.string.postpone_pick_date),
+                    subtitle = null,
+                    onClick = { showDatePicker = true },
+                )
             }
         },
         confirmButton = {},
@@ -894,6 +1041,43 @@ private fun PostponeDialog(
             }
         },
     )
+}
+
+@Composable
+private fun PostponeRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    subtitle: String?,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = PostponeAmber,
+            modifier = Modifier.size(24.dp),
+        )
+        Spacer(Modifier.width(16.dp))
+        Column {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

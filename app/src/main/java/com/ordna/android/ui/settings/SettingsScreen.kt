@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -84,6 +85,7 @@ import kotlin.math.roundToInt
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onSignOut: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val language by viewModel.language.collectAsState()
@@ -496,6 +498,54 @@ fun SettingsScreen(
                         modifier = Modifier.clickable { uriHandler.openUri("https://buymeacoffee.com/klippel") },
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            var showSignOutDialog by remember { mutableStateOf(false) }
+
+            OutlinedButton(
+                onClick = { showSignOutDialog = true },
+                modifier = Modifier.fillMaxWidth(),
+                colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error,
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.error.copy(alpha = 0.5f),
+                ),
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.settings_sign_out))
+            }
+
+            if (showSignOutDialog) {
+                AlertDialog(
+                    onDismissRequest = { showSignOutDialog = false },
+                    title = { Text(stringResource(R.string.settings_sign_out)) },
+                    text = { Text(stringResource(R.string.settings_sign_out_confirm)) },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showSignOutDialog = false
+                            viewModel.signOut { onSignOut() }
+                        }) {
+                            Text(
+                                stringResource(R.string.settings_sign_out),
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showSignOutDialog = false }) {
+                            Text(stringResource(android.R.string.cancel))
+                        }
+                    },
+                )
             }
 
             Spacer(modifier = Modifier.height(32.dp))

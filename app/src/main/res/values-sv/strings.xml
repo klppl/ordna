@@ -2,7 +2,7 @@
 <resources>
     <!-- Widget -->
     <string name="widget_name">Ordna Idag</string>
-    <string name="widget_description">Dagens uppgifter i en överblick</string>
+    <string name="widget_description">Dagens uppgifter i ett ögonkast</string>
     <string name="counter_widget_description">Räknare för återstående uppgifter</string>
     <string name="counter_widget_left">kvar</string>
     <string name="counter_widget_done">Klart</string>
@@ -29,10 +29,18 @@
     <string name="streak_days">%1$d dagar i rad</string>
     <string name="error_sync_failed">Synkronisering misslyckades</string>
     <string name="error_task_update_failed">Kunde inte uppdatera uppgift</string>
+    <string name="last_sync_just_now">Synkad just nu</string>
+    <string name="last_sync_minutes">Synkad för %1$d min sedan</string>
+    <string name="last_sync_hours">Synkad för %1$d h sedan</string>
+    <string name="last_sync_long_ago">Synkad för över en dag sedan</string>
+
     <string name="postpone_title">Skjut upp uppgift</string>
     <string name="postpone_today">Idag</string>
     <string name="postpone_tomorrow">Imorgon</string>
+    <string name="postpone_later_this_week">Senare i veckan</string>
+    <string name="postpone_this_weekend">I helgen</string>
     <string name="postpone_next_week">Nästa vecka</string>
+    <string name="postpone_pick_date">Välj datum</string>
 
     <!-- Content descriptions -->
     <string name="cd_settings">Inställningar</string>
@@ -40,7 +48,7 @@
     <string name="cd_collapse">Fäll ihop</string>
     <string name="cd_expand">Expandera</string>
     <string name="cd_complete">Slutför</string>
-    <string name="cd_uncomplete">Ångra slutförd</string>
+    <string name="cd_uncomplete">Markera som ej klar</string>
 
     <!-- Task creation -->
     <string name="create_task_hint">Ny uppgift</string>
@@ -83,10 +91,10 @@
     <string name="settings_section_widget">Widget</string>
     <string name="settings_widget_bg_title">Bakgrund</string>
     <string name="settings_widget_bg_subtitle">Widgetens bakgrundsfärg</string>
-    <string name="settings_widget_opacity_title">Opacitet</string>
-    <string name="settings_widget_opacity_subtitle">Bakgrundens genomskinlighet</string>
+    <string name="settings_widget_opacity_title">Genomskinlighet</string>
+    <string name="settings_widget_opacity_subtitle">Hur genomskinlig bakgrunden är</string>
     <string name="settings_widget_show_completed_title">Visa klara</string>
-    <string name="settings_widget_show_completed_subtitle">Visa avslutade uppgifter i widgeten</string>
+    <string name="settings_widget_show_completed_subtitle">Visa klara uppgifter i widgeten</string>
     <string name="settings_widget_sorting_title">Sortering</string>
     <string name="settings_widget_sorting_subtitle">Hur uppgifter organiseras i widgeten</string>
     <string name="settings_widget_color_auto">Auto</string>
@@ -106,15 +114,17 @@
 
     <!-- Stats -->
     <string name="settings_section_stats">Statistik</string>
-    <string name="settings_streak_title">Nuvarande svit</string>
+    <string name="settings_streak_title">Aktuell serie</string>
     <string name="settings_streak_subtitle">Dagar i rad med alla uppgifter slutförda</string>
     <string name="settings_streak_value">%1$d dagar</string>
-    <string name="settings_streak_none">Ingen svit ännu</string>
+    <string name="settings_streak_none">Ingen serie ännu</string>
 
     <!-- Credits -->
     <string name="settings_made_by">Skapad av klppl</string>
     <string name="settings_github">GitHub</string>
     <string name="settings_buy_coffee">Bjud mig på en kaffe</string>
+    <string name="settings_sign_out">Logga ut</string>
+    <string name="settings_sign_out_confirm">Detta tar bort ditt konto och all lokal data. Logga ut?</string>
 
     <!-- Layout density (shared) -->
     <string name="settings_layout_title">Visningsläge</string>
@@ -126,7 +136,7 @@
     <!-- Reminders -->
     <string name="settings_section_reminders">Påminnelser</string>
     <string name="reminder_master_toggle">Uppgiftspåminnelser</string>
-    <string name="reminder_master_subtitle">Bli påmind om att kolla dina uppgifter</string>
+    <string name="reminder_master_subtitle">Få påminnelser om dina uppgifter</string>
     <string name="reminder_morning">Morgon</string>
     <string name="reminder_midday">Mitt på dagen</string>
     <string name="reminder_evening">Kväll</string>
@@ -139,4 +149,9 @@
         <item quantity="other">Du har %1$d uppgifter kvar idag</item>
     </plurals>
     <string name="reminder_permission_needed">Aviseringsbehörighet krävs för påminnelser</string>
+
+    <!-- Sync failure -->
+    <string name="sync_fail_channel_name">Synkfel</string>
+    <string name="sync_fail_title">Uppdatering misslyckades</string>
+    <string name="sync_fail_body">Kunde inte synka \"%1$s\" — ändringen återställdes</string>
 </resources>

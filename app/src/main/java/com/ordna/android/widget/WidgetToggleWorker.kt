@@ -1,9 +1,16 @@
 package com.ordna.android.widget
 
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.ordna.android.MainActivity
+import com.ordna.android.OrdnaApplication
+import com.ordna.android.R
 import com.ordna.android.data.local.TaskDatabase
 import com.ordna.android.data.remote.GoogleTasksApi
 import com.ordna.android.data.repository.TaskRepository
@@ -22,6 +29,7 @@ class WidgetToggleWorker @AssistedInject constructor(
         val taskId = inputData.getString("task_id") ?: return Result.failure()
         val listId = inputData.getString("list_id") ?: return Result.failure()
         val completing = inputData.getBoolean("completing", true)
+        val taskTitle = inputData.getString("task_title") ?: ""
         val email = repository.getAccountEmail() ?: return Result.failure()
 
         return try {
@@ -37,9 +45,35 @@ class WidgetToggleWorker @AssistedInject constructor(
             val revertStatus = if (completing) "needsAction" else "completed"
             val revertCompleted = if (completing) null else java.time.Instant.now()
             dao.updateTaskStatus(taskId, revertStatus, revertCompleted)
-            // Room Flow will re-emit, but also trigger update() as safety
             updateAllWidgets(applicationContext)
-            Result.retry()
+
+            // Notify user of the failure
+            try {
+                val tapIntent = Intent(applicationContext, MainActivity::class.java).apply {
+                    putExtra("SYNC_ON_LAUNCH", true)
+                    putExtra("NAVIGATE_TODAY", true)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                }
+                val tapPendingIntent = PendingIntent.getActivity(
+                    applicationContext,
+                    taskId.hashCode(),
+                    tapIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+
+                val notification = NotificationCompat.Builder(applicationContext, OrdnaApplication.SYNC_FAIL_CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentTitle(applicationContext.getString(R.string.sync_fail_title))
+                    .setContentText(applicationContext.getString(R.string.sync_fail_body, taskTitle))
+                    .setContentIntent(tapPendingIntent)
+                    .setAutoCancel(true)
+                    .build()
+                NotificationManagerCompat.from(applicationContext).notify(taskId.hashCode(), notification)
+            } catch (_: SecurityException) {
+                // No notification permission — silent revert
+            }
+
+            Result.failure()
         }
     }
 }

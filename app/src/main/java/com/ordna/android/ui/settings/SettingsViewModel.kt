@@ -314,6 +314,14 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun signOut(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            reminderScheduler.cancelAll()
+            taskRepository.clearAccount()
+            onComplete()
+        }
+    }
+
     private suspend fun refreshWidget() {
         updateAllWidgets(getApplication())
     }

@@ -46,12 +46,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val navigateToday = intent?.getBooleanExtra("NAVIGATE_TODAY", false) == true
+
         setContent {
             val themeName by settingsRepository.appTheme.collectAsState(initial = "SYSTEM")
             val appTheme = AppTheme.entries.find { it.name == themeName } ?: AppTheme.SYSTEM
 
             OrdnaTheme(appTheme = appTheme) {
-                OrdnaNavGraph()
+                OrdnaNavGraph(navigateToToday = navigateToday)
             }
         }
     }

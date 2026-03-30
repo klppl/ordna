@@ -11,11 +11,27 @@ export JAVA_HOME=/home/alex/.sdkman/candidates/java/current
 # Build debug APK
 ./gradlew assembleDebug
 
+# Build release AAB (for Google Play upload)
+./gradlew bundleRelease
+
 # Install on connected device
-sudo adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
 No test infrastructure exists yet. No linter is configured.
+
+## Signing
+
+Both debug and release builds use the same release keystore so APKs are interchangeable on device (no signature mismatch). The signing config reads from `keystore.properties` in the project root (gitignored). On a new machine, create this file:
+
+```properties
+storeFile=/path/to/ordna-release.keystore
+storePassword=<password>
+keyAlias=ordna
+keyPassword=<password>
+```
+
+The keystore must be the same one registered in Google Cloud Console for the Google Tasks API OAuth client (SHA1 fingerprint). Without `keystore.properties`, builds will be unsigned and Google sign-in won't work.
 
 ## Architecture
 

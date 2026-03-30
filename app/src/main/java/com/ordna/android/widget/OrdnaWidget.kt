@@ -198,40 +198,36 @@ private fun WidgetContent(
                 modifier = GlanceModifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = ctx.getString(R.string.widget_today),
-                    style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 15.sp, color = textColor),
-                )
+                if (totalCount > 0) {
+                    Text(
+                        text = ctx.getString(R.string.widget_done_count, completedCount, totalCount),
+                        style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Medium, color = textColor),
+                    )
+                }
                 Spacer(modifier = GlanceModifier.defaultWeight())
-                Text(
-                    text = ctx.getString(R.string.widget_done_count, completedCount, totalCount),
-                    style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Medium, color = subtextColor),
-                )
-                Spacer(modifier = GlanceModifier.width(8.dp))
                 Image(
                     provider = ImageProvider(R.drawable.ic_refresh),
                     contentDescription = ctx.getString(R.string.widget_refresh),
                     modifier = GlanceModifier
-                        .size(20.dp)
+                        .size(18.dp)
                         .clickable(actionRunCallback<RefreshWidgetAction>()),
                     colorFilter = androidx.glance.ColorFilter.tint(iconTint),
                 )
             }
 
-            Spacer(modifier = GlanceModifier.height(10.dp))
-
             if (totalCount > 0) {
+                Spacer(modifier = GlanceModifier.height(6.dp))
                 val progress = completedCount.toFloat() / totalCount
                 val trackColor = if (isLight) ColorProvider(Color(0xFFE0E0E0)) else ColorProvider(Color(0xFF444444))
 
                 LinearProgressIndicator(
                     progress = progress,
-                    modifier = GlanceModifier.fillMaxWidth().height(6.dp),
+                    modifier = GlanceModifier.fillMaxWidth().height(4.dp),
                     color = primaryBarColor,
                     backgroundColor = trackColor,
                 )
-                Spacer(modifier = GlanceModifier.height(10.dp))
             }
+            Spacer(modifier = GlanceModifier.height(10.dp))
 
             if (totalCount == 0) {
                 Spacer(modifier = GlanceModifier.defaultWeight())
@@ -277,9 +273,6 @@ private fun WidgetContent(
                         }
                     }
                     if (sortedToday.isNotEmpty()) {
-                        item(itemId = -2L) {
-                            WidgetSectionHeader(ctx.getString(R.string.section_due_today).uppercase(), null, sortedToday.size, subtextColor)
-                        }
                         if (sorting == WidgetSorting.BY_LIST) {
                             val grouped = sortedToday.groupBy { it.listTitle to it.listColor }
                             for ((listInfo, tasks) in grouped) {
@@ -391,17 +384,21 @@ class ToggleTaskAction : ActionCallback {
         val newStatus = if (isCompleting) "completed" else "needsAction"
         val completedAt = if (isCompleting) java.time.Instant.now() else null
 
-        // Update Room — this triggers the Room Flow to re-emit,
-        // which causes provideContent to recompose automatically.
+        // Optimistic update — move task immediately in the UI
         dao.updateTaskStatus(taskId, newStatus, completedAt)
 
         // Enqueue background API call
         val workRequest = OneTimeWorkRequestBuilder<WidgetToggleWorker>()
-            .setInputData(workDataOf("task_id" to taskId, "list_id" to listId, "completing" to isCompleting))
+            .setInputData(workDataOf(
+                "task_id" to taskId,
+                "list_id" to listId,
+                "completing" to isCompleting,
+                "task_title" to task.title,
+            ))
             .build()
         WorkManager.getInstance(context).enqueue(workRequest)
 
-        // Safety: explicitly trigger update in case the Glance composition was torn down
-        OrdnaWidget().update(context, glanceId)
+        // Force all widgets to refresh with the updated data
+        updateAllWidgets(context)
     }
 }

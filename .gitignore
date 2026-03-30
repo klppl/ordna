@@ -37,6 +37,7 @@ captures/
 # Keystore files
 *.jks
 *.keystore
+!debug.keystore
 keystore.properties
 
 # Google Services (contains API keys)
