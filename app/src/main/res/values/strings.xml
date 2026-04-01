@@ -126,6 +126,8 @@
     <string name="settings_streak_subtitle">Consecutive days with all tasks completed</string>
     <string name="settings_streak_value">%1$d days</string>
     <string name="settings_streak_none">No streak yet</string>
+    <string name="settings_vacation_title">Vacation mode</string>
+    <string name="settings_vacation_subtitle">Pause streak while away</string>
 
     <!-- Credits -->
     <string name="settings_made_by">Made by klppl</string>

@@ -123,6 +123,8 @@
     <string name="settings_streak_subtitle">Dagar i rad med alla uppgifter slutförda</string>
     <string name="settings_streak_value">%1$d dagar</string>
     <string name="settings_streak_none">Ingen serie ännu</string>
+    <string name="settings_vacation_title">Semesterläge</string>
+    <string name="settings_vacation_subtitle">Pausa serien under ledighet</string>
 
     <!-- Credits -->
     <string name="settings_made_by">Skapad av klppl</string>

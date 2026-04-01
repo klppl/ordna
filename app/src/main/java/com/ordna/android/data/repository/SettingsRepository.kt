@@ -1,6 +1,7 @@
 package com.ordna.android.data.repository
 
 import android.content.Context
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
@@ -63,6 +64,7 @@ class SettingsRepository @Inject constructor(
 
     private val streakCountKey = intPreferencesKey("streak_count")
     private val streakLastDateKey = stringPreferencesKey("streak_last_date")
+    private val vacationModeKey = booleanPreferencesKey("vacation_mode")
 
     private val listOrderKey = stringPreferencesKey("list_order")
 
@@ -191,11 +193,34 @@ class SettingsRepository @Inject constructor(
     // -- Streak --
 
     val streak: Flow<Int> = context.settingsDataStore.data.map { prefs ->
-        prefs[streakCountKey] ?: 0
+        effectiveStreak(prefs)
+    }
+
+    val vacationMode: Flow<Boolean> = context.settingsDataStore.data.map { prefs ->
+        prefs[vacationModeKey] ?: false
+    }
+
+    suspend fun setVacationMode(enabled: Boolean) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[vacationModeKey] = enabled
+            if (!enabled) {
+                // Bridge the gap so next completion continues the streak
+                prefs[streakLastDateKey] = LocalDate.now().minusDays(1).toString()
+            }
+        }
+    }
+
+    suspend fun resetStreak() {
+        context.settingsDataStore.edit { prefs ->
+            prefs[streakCountKey] = 0
+            prefs.remove(streakLastDateKey)
+        }
     }
 
     suspend fun recordAllDone() {
         context.settingsDataStore.edit { prefs ->
+            if (prefs[vacationModeKey] == true) return@edit // streak frozen
+
             val today = LocalDate.now().toString()
             val lastDate = prefs[streakLastDateKey]
 
@@ -343,9 +368,21 @@ class SettingsRepository @Inject constructor(
 
         /** Reactive Flow for widget — emits whenever streak count changes. */
         fun streakFlow(context: Context): Flow<Int> =
-            context.settingsDataStore.data.map { prefs ->
-                prefs[intPreferencesKey("streak_count")] ?: 0
-            }
+            context.settingsDataStore.data.map { prefs -> effectiveStreak(prefs) }
+
+        /**
+         * Returns 0 if the streak has lapsed (last recorded date is older than
+         * yesterday and vacation mode is off). Otherwise returns the stored count.
+         */
+        private fun effectiveStreak(prefs: Preferences): Int {
+            val count = prefs[intPreferencesKey("streak_count")] ?: 0
+            if (count == 0) return 0
+            if (prefs[booleanPreferencesKey("vacation_mode")] == true) return count
+            val lastDate = prefs[stringPreferencesKey("streak_last_date")] ?: return 0
+            val today = LocalDate.now()
+            val last = LocalDate.parse(lastDate)
+            return if (last >= today.minusDays(1)) count else 0
+        }
 
         /** Snapshot read (suspend) — for one-off reads outside composition. */
         suspend fun readListOrder(context: Context): List<String> {
