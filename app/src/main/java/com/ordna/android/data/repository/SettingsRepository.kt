@@ -341,6 +341,12 @@ class SettingsRepository @Inject constructor(
                 prefs[stringPreferencesKey("list_order")]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
             }
 
+        /** Reactive Flow for widget — emits whenever streak count changes. */
+        fun streakFlow(context: Context): Flow<Int> =
+            context.settingsDataStore.data.map { prefs ->
+                prefs[intPreferencesKey("streak_count")] ?: 0
+            }
+
         /** Snapshot read (suspend) — for one-off reads outside composition. */
         suspend fun readListOrder(context: Context): List<String> {
             val prefs = context.settingsDataStore.data.first()

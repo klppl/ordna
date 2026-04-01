@@ -51,12 +51,14 @@ class CounterWidget : GlanceAppWidget() {
         val dao = TaskDatabase.getInstance(context).taskDao()
         val today = LocalDate.now()
         val settingsFlow = SettingsRepository.widgetSettingsFlow(context)
+        val streakFlow = SettingsRepository.streakFlow(context)
 
         // Snapshot for instant first frame
         val initialOverdue = dao.getOverdueTasks(today).first()
         val initialToday = dao.getTodayTasks(today).first()
         val initialCompleted = dao.getCompletedTasks().first()
         val initialSettings = settingsFlow.first()
+        val initialStreak = streakFlow.first()
 
         provideContent {
             // Reactive Flows keep widget in sync when composition is alive
@@ -64,6 +66,7 @@ class CounterWidget : GlanceAppWidget() {
             val todayTasks by dao.getTodayTasks(today).collectAsState(initial = initialToday)
             val completedTasks by dao.getCompletedTasks().collectAsState(initial = initialCompleted)
             val settings by settingsFlow.collectAsState(initial = initialSettings)
+            val streak by streakFlow.collectAsState(initial = initialStreak)
 
             val activeCount = overdueTasks.size + todayTasks.size
             val completedCount = completedTasks.size
@@ -75,6 +78,7 @@ class CounterWidget : GlanceAppWidget() {
                     totalCount = totalCount,
                     completedCount = completedCount,
                     settings = settings,
+                    streak = streak,
                 )
             }
         }
@@ -91,6 +95,7 @@ private fun CounterContent(
     totalCount: Int,
     completedCount: Int,
     settings: WidgetSettings,
+    streak: Int,
 ) {
     val ctx = LocalContext.current
     val appTheme = AppTheme.entries.find { it.name == settings.theme } ?: AppTheme.SYSTEM
@@ -141,6 +146,12 @@ private fun CounterContent(
                 Text(
                     text = ctx.getString(R.string.counter_widget_left),
                     style = TextStyle(fontSize = 12.sp, color = subtextColor),
+                )
+            } else if (streak > 0) {
+                Spacer(modifier = GlanceModifier.height(4.dp))
+                Text(
+                    text = ctx.getString(R.string.widget_streak, streak),
+                    style = TextStyle(fontSize = 11.sp, color = subtextColor),
                 )
             }
             if (totalCount > 0) {

@@ -13,6 +13,9 @@
     <string name="widget_no_tasks">No tasks today</string>
     <string name="widget_overdue">overdue</string>
     <string name="widget_refresh">Refresh</string>
+    <string name="widget_all_done">All done</string>
+    <string name="widget_all_done_subtitle">Nothing left for today</string>
+    <string name="widget_streak">%1$d-day streak</string>
 
     <!-- Sign-in -->
     <string name="sign_in_title">Ordna</string>

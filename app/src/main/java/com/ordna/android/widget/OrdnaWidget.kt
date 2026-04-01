@@ -73,6 +73,7 @@ class OrdnaWidget : GlanceAppWidget() {
         val today = LocalDate.now()
         val settingsFlow = SettingsRepository.widgetSettingsFlow(context)
         val listOrderFlow = SettingsRepository.listOrderFlow(context)
+        val streakFlow = SettingsRepository.streakFlow(context)
 
         // Snapshot data eagerly so the first frame renders real content
         // instead of empty lists. Flows still drive live updates afterwards.
@@ -81,6 +82,7 @@ class OrdnaWidget : GlanceAppWidget() {
         val initialCompleted = dao.getCompletedTasks().first()
         val initialSettings = settingsFlow.first()
         val initialListOrder = listOrderFlow.first()
+        val initialStreak = streakFlow.first()
 
         provideContent {
             val overdueTasks by dao.getOverdueTasks(today).collectAsState(initial = initialOverdue)
@@ -88,6 +90,7 @@ class OrdnaWidget : GlanceAppWidget() {
             val completedTasksAll by dao.getCompletedTasks().collectAsState(initial = initialCompleted)
             val widgetSettings by settingsFlow.collectAsState(initial = initialSettings)
             val listOrder by listOrderFlow.collectAsState(initial = initialListOrder)
+            val streak by streakFlow.collectAsState(initial = initialStreak)
 
             // Derive display properties from current settings
             val appTheme = AppTheme.entries.find { it.name == widgetSettings.theme } ?: AppTheme.SYSTEM
@@ -130,6 +133,7 @@ class OrdnaWidget : GlanceAppWidget() {
                     density = density,
                     sorting = sorting,
                     listOrder = listOrder,
+                    streak = streak,
                 )
             }
         }
@@ -164,6 +168,7 @@ private fun WidgetContent(
     density: LayoutDensity,
     sorting: WidgetSorting,
     listOrder: List<String>,
+    streak: Int,
 ) {
     val rowPadding = when (density) {
         LayoutDensity.COMFORTABLE -> 5.dp
@@ -229,10 +234,41 @@ private fun WidgetContent(
             }
             Spacer(modifier = GlanceModifier.height(10.dp))
 
+            val allCompleted = totalCount > 0 && completedCount == totalCount
+
             if (totalCount == 0) {
                 Spacer(modifier = GlanceModifier.defaultWeight())
                 Row(modifier = GlanceModifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(text = ctx.getString(R.string.widget_no_tasks), style = TextStyle(fontSize = 14.sp, color = subtextColor))
+                }
+                Spacer(modifier = GlanceModifier.defaultWeight())
+            } else if (allCompleted) {
+                Spacer(modifier = GlanceModifier.defaultWeight())
+                Column(
+                    modifier = GlanceModifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = "\u2713",
+                        style = TextStyle(fontSize = 32.sp, fontWeight = FontWeight.Bold, color = ColorProvider(completedColor)),
+                    )
+                    Spacer(modifier = GlanceModifier.height(8.dp))
+                    Text(
+                        text = ctx.getString(R.string.widget_all_done),
+                        style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium, color = textColor),
+                    )
+                    Spacer(modifier = GlanceModifier.height(4.dp))
+                    Text(
+                        text = ctx.getString(R.string.widget_all_done_subtitle),
+                        style = TextStyle(fontSize = 12.sp, color = subtextColor),
+                    )
+                    if (streak > 0) {
+                        Spacer(modifier = GlanceModifier.height(12.dp))
+                        Text(
+                            text = ctx.getString(R.string.widget_streak, streak),
+                            style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Medium, color = subtextColor),
+                        )
+                    }
                 }
                 Spacer(modifier = GlanceModifier.defaultWeight())
             } else {

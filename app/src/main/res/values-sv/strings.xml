@@ -11,6 +11,9 @@
     <string name="widget_no_tasks">Inga uppgifter idag</string>
     <string name="widget_overdue">försenad</string>
     <string name="widget_refresh">Uppdatera</string>
+    <string name="widget_all_done">Allt klart</string>
+    <string name="widget_all_done_subtitle">Inget kvar för idag</string>
+    <string name="widget_streak">%1$d dagar i rad</string>
 
     <!-- Sign-in -->
     <string name="sign_in_subtitle">Idag. Inget mer.</string>
