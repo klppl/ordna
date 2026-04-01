@@ -19,6 +19,7 @@ googleHttpClientGson = "1.45.1"
 googleApiServicesTasks = "v1-rev20250302-2.0.0"
 datastorePreferences = "1.1.1"
 appcompat = "1.7.0"
+profileinstaller = "1.4.1"
 
 [libraries]
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -68,6 +69,9 @@ google-api-services-tasks = { group = "com.google.apis", name = "google-api-serv
 
 # AppCompat
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+
+# ProfileInstaller
+profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 
 # DataStore
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }

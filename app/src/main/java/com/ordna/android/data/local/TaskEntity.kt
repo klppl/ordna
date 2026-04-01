@@ -1,11 +1,18 @@
 package com.ordna.android.data.local
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.Instant
 import java.time.LocalDate
 
-@Entity(tableName = "tasks")
+@Entity(
+    tableName = "tasks",
+    indices = [
+        Index(value = ["status", "due"]),
+        Index(value = ["status", "completedAt"]),
+    ]
+)
 data class TaskEntity(
     @PrimaryKey val id: String,
     val title: String,

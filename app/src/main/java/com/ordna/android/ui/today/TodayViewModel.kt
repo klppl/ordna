@@ -7,7 +7,6 @@ import com.ordna.android.R
 import com.ordna.android.data.local.TaskEntity
 import com.ordna.android.data.repository.CompletionMethod
 import com.ordna.android.data.repository.LayoutDensity
-import com.ordna.android.data.remote.GoogleTasksApi
 import com.ordna.android.data.repository.SettingsRepository
 import com.ordna.android.data.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,6 +20,7 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import javax.inject.Inject
 
+@androidx.compose.runtime.Immutable
 data class TodayUiState(
     val overdueTasks: List<TaskEntity> = emptyList(),
     val todayTasks: List<TaskEntity> = emptyList(),
@@ -45,7 +45,6 @@ class TodayViewModel @Inject constructor(
     application: Application,
     private val repository: TaskRepository,
     private val settingsRepository: SettingsRepository,
-    private val api: GoogleTasksApi,
 ) : AndroidViewModel(application) {
 
     private fun getString(resId: Int): String = getApplication<Application>().getString(resId)
@@ -117,10 +116,12 @@ class TodayViewModel @Inject constructor(
 
     init {
         refresh()
-        // Record streak when all tasks become completed
+        // Record streak when all tasks become completed; reset if overdue tasks exist
         viewModelScope.launch {
             uiState.collect { state ->
-                if (state.allCompleted && !_streakRecorded.value) {
+                if (state.overdueTasks.isNotEmpty()) {
+                    settingsRepository.resetStreak()
+                } else if (state.allCompleted && !_streakRecorded.value) {
                     _streakRecorded.value = true
                     settingsRepository.recordAllDone()
                 } else if (!state.allCompleted) {
@@ -128,19 +129,13 @@ class TodayViewModel @Inject constructor(
                 }
             }
         }
-        // Load available lists for task creation
+        // Populate available lists from sync cache (no extra API call)
         viewModelScope.launch {
-            try {
-                val email = repository.getAccountEmail() ?: return@launch
-                val lists = api.fetchTaskLists(email)
-                _availableLists.value = lists.mapNotNull { list ->
-                    val id = list.id ?: return@mapNotNull null
-                    val title = list.title ?: "Untitled"
-                    com.ordna.android.ui.settings.TaskListOption(
-                        id, title, GoogleTasksApi.colorForListId(id)
-                    )
+            repository.cachedTaskLists.collect { lists ->
+                _availableLists.value = lists.map {
+                    com.ordna.android.ui.settings.TaskListOption(it.id, it.title, it.color)
                 }
-            } catch (_: Exception) { }
+            }
         }
     }
 

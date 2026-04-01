@@ -12,6 +12,9 @@ import com.ordna.android.data.remote.GoogleTasksApi
 import com.ordna.android.widget.updateAllWidgets
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.Instant
@@ -21,6 +24,8 @@ import javax.inject.Singleton
 
 private val Context.dataStore by preferencesDataStore(name = "ordna_prefs")
 
+data class TaskListInfo(val id: String, val title: String, val color: Int)
+
 @Singleton
 class TaskRepository @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -29,6 +34,9 @@ class TaskRepository @Inject constructor(
 ) {
     private val accountEmailKey = stringPreferencesKey("account_email")
     private val lastSyncKey = longPreferencesKey("last_sync")
+
+    private val _cachedTaskLists = MutableStateFlow<List<TaskListInfo>>(emptyList())
+    val cachedTaskLists: StateFlow<List<TaskListInfo>> = _cachedTaskLists.asStateFlow()
 
     val accountEmail: Flow<String?> = context.dataStore.data.map { it[accountEmailKey] }
 
@@ -40,7 +48,6 @@ class TaskRepository @Inject constructor(
         context.dataStore.data.first()[accountEmailKey]
 
     suspend fun saveAccountEmail(email: String) {
-        context.dataStore.data.first() // ensure initialized
         context.dataStore.edit { it[accountEmailKey] = email }
     }
 
@@ -60,7 +67,8 @@ class TaskRepository @Inject constructor(
 
     suspend fun sync(): Result<Unit> = runCatching {
         val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
-        performSync(taskDao, api, email)
+        val taskLists = performSync(taskDao, api, email)
+        _cachedTaskLists.value = taskLists
         context.dataStore.edit { it[lastSyncKey] = Instant.now().toEpochMilli() }
         updateAllWidgets(context)
     }
@@ -183,7 +191,7 @@ class TaskRepository @Inject constructor(
         /**
          * Core sync logic shared by both Hilt-injected sync() and standalone syncForWidget().
          */
-        private suspend fun performSync(dao: TaskDao, api: GoogleTasksApi, email: String) {
+        private suspend fun performSync(dao: TaskDao, api: GoogleTasksApi, email: String): List<TaskListInfo> {
             val today = LocalDate.now()
             val taskLists = api.fetchTaskLists(email)
             val allTasks = mutableListOf<TaskEntity>()
@@ -234,12 +242,10 @@ class TaskRepository @Inject constructor(
                 }
             }
 
-            dao.upsertAll(allTasks)
-            val validIds = allTasks.map { it.id }
-            if (validIds.isNotEmpty()) {
-                dao.deleteTasksNotIn(validIds)
-            } else {
-                dao.deleteAll()
+            dao.syncReplace(allTasks)
+            return taskLists.mapNotNull { list ->
+                val id = list.id ?: return@mapNotNull null
+                TaskListInfo(id, list.title ?: "Untitled", GoogleTasksApi.colorForListId(id))
             }
         }
     }

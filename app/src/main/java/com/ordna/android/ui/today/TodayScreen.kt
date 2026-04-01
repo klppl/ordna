@@ -1,7 +1,6 @@
 package com.ordna.android.ui.today
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -244,10 +243,15 @@ fun TodayScreen(
                     )
                 }
             } else {
+                // Pre-compute grouping so it's not recalculated on every recomposition
+                val groupedOverdue = remember(state.overdueTasks) { state.overdueTasks.groupBy { it.listTitle } }
+                val groupedToday = remember(state.todayTasks) { state.todayTasks.groupBy { it.listTitle } }
+                val groupedCompleted = remember(state.completedTasks) { state.completedTasks.groupBy { it.listTitle } }
+
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .animateContentSize(),
+                        ,
                 ) {
                     // All done celebration
                     if (state.allCompleted) {
@@ -273,6 +277,7 @@ fun TodayScreen(
                                 tasks = state.overdueTasks,
                                 keyPrefix = "overdue",
                                 groupByList = state.groupByList,
+                                grouped = groupedOverdue,
                                 completionMethod = state.completionMethod,
                                 layoutDensity = state.layoutDensity,
                                 isOverdue = true,
@@ -295,6 +300,7 @@ fun TodayScreen(
                             tasks = state.todayTasks,
                             keyPrefix = "today",
                             groupByList = state.groupByList,
+                            grouped = groupedToday,
                             completionMethod = state.completionMethod,
                             layoutDensity = state.layoutDensity,
                             onToggle = { viewModel.toggleTask(it) },
@@ -319,6 +325,7 @@ fun TodayScreen(
                             tasks = state.completedTasks,
                             keyPrefix = "completed",
                             groupByList = state.groupByList,
+                            grouped = groupedCompleted,
                             completionMethod = state.completionMethod,
                             layoutDensity = state.layoutDensity,
                             isCompleted = true,
@@ -406,6 +413,7 @@ private fun LazyListScope.taskSection(
     tasks: List<TaskEntity>,
     keyPrefix: String,
     groupByList: Boolean,
+    grouped: Map<String, List<TaskEntity>> = emptyMap(),
     completionMethod: CompletionMethod,
     layoutDensity: LayoutDensity,
     isOverdue: Boolean = false,
@@ -415,7 +423,6 @@ private fun LazyListScope.taskSection(
     onTap: ((TaskEntity) -> Unit)? = null,
 ) {
     if (groupByList) {
-        val grouped = tasks.groupBy { it.listTitle }
         for ((listTitle, listTasks) in grouped) {
             val firstTask = listTasks.first()
             item(key = "${keyPrefix}_group_$listTitle") {

@@ -22,21 +22,27 @@ import javax.inject.Singleton
 class GoogleTasksApi @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
-    private fun buildService(accountEmail: String): Tasks {
+    private var cachedEmail: String? = null
+    private var cachedService: Tasks? = null
+
+    private fun getService(accountEmail: String): Tasks {
+        cachedService?.let { if (cachedEmail == accountEmail) return it }
         val credential = GoogleAccountCredential.usingOAuth2(
             context, listOf(TasksScopes.TASKS)
         )
         credential.selectedAccount = Account(accountEmail, "com.google")
-
         return Tasks.Builder(
             NetHttpTransport(),
             GsonFactory.getDefaultInstance(),
             credential
-        ).setApplicationName("Ordna").build()
+        ).setApplicationName("Ordna").build().also {
+            cachedEmail = accountEmail
+            cachedService = it
+        }
     }
 
     suspend fun fetchTaskLists(accountEmail: String): List<TaskList> = withContext(Dispatchers.IO) {
-        buildService(accountEmail).tasklists().list()
+        getService(accountEmail).tasklists().list()
             .setMaxResults(100)
             .execute()
             .items ?: emptyList()
@@ -50,7 +56,7 @@ class GoogleTasksApi @Inject constructor(
         var pageToken: String? = null
 
         do {
-            val request = buildService(accountEmail).tasks().list(listId)
+            val request = getService(accountEmail).tasks().list(listId)
                 .setShowCompleted(true)
                 .setShowHidden(true)
                 .setMaxResults(100)
@@ -69,10 +75,8 @@ class GoogleTasksApi @Inject constructor(
         listId: String,
         taskId: String,
     ) = withContext(Dispatchers.IO) {
-        val service = buildService(accountEmail)
-        val task = service.tasks().get(listId, taskId).execute()
-        task.status = "completed"
-        service.tasks().update(listId, taskId, task).execute()
+        val patch = Task().apply { status = "completed" }
+        getService(accountEmail).tasks().patch(listId, taskId, patch).execute()
     }
 
     suspend fun uncompleteTask(
@@ -80,11 +84,8 @@ class GoogleTasksApi @Inject constructor(
         listId: String,
         taskId: String,
     ) = withContext(Dispatchers.IO) {
-        val service = buildService(accountEmail)
-        val task = service.tasks().get(listId, taskId).execute()
-        task.status = "needsAction"
-        task.completed = null
-        service.tasks().update(listId, taskId, task).execute()
+        val patch = Task().apply { status = "needsAction" }
+        getService(accountEmail).tasks().patch(listId, taskId, patch).execute()
     }
 
     suspend fun createTask(
@@ -101,7 +102,7 @@ class GoogleTasksApi @Inject constructor(
         if (!notes.isNullOrBlank()) {
             task.notes = notes
         }
-        buildService(accountEmail).tasks().insert(listId, task).execute()
+        getService(accountEmail).tasks().insert(listId, task).execute()
     }
 
     suspend fun updateTaskNotes(
@@ -110,7 +111,7 @@ class GoogleTasksApi @Inject constructor(
         taskId: String,
         notes: String?,
     ) = withContext(Dispatchers.IO) {
-        val service = buildService(accountEmail)
+        val service = getService(accountEmail)
         val task = service.tasks().get(listId, taskId).execute()
         task.notes = notes
         service.tasks().update(listId, taskId, task).execute()
@@ -122,7 +123,7 @@ class GoogleTasksApi @Inject constructor(
         taskId: String,
         newDue: LocalDate,
     ) = withContext(Dispatchers.IO) {
-        val service = buildService(accountEmail)
+        val service = getService(accountEmail)
         val task = service.tasks().get(listId, taskId).execute()
         // Google Tasks expects due as RFC 3339 date-time at midnight UTC
         task.due = "${newDue}T00:00:00.000Z"

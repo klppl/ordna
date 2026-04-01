@@ -88,38 +88,44 @@ fun SettingsScreen(
     onSignOut: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
-    val language by viewModel.language.collectAsState()
-    val appTheme by viewModel.appTheme.collectAsState()
-    val groupByList by viewModel.groupByList.collectAsState()
-    val completionMethod by viewModel.completionMethod.collectAsState()
-    val appLayoutDensity by viewModel.appLayoutDensity.collectAsState()
+    // Grouped state — reduces from 23 to 10 Flow subscriptions
+    val appState by viewModel.appSettingsState.collectAsState()
+    val language = appState.language
+    val appTheme = appState.appTheme
+    val groupByList = appState.groupByList
+    val completionMethod = appState.completionMethod
+    val appLayoutDensity = appState.layoutDensity
+
     val shareListTitle by viewModel.shareListTitle.collectAsState()
     val createListTitle by viewModel.createListTitle.collectAsState()
     val availableLists by viewModel.availableLists.collectAsState()
     val listsLoading by viewModel.listsLoading.collectAsState()
-
     val orderedLists by viewModel.orderedLists.collectAsState()
 
     // Load lists for ordering
     LaunchedEffect(Unit) { viewModel.loadAvailableLists() }
 
-    val widgetBg by viewModel.widgetBackground.collectAsState()
-    val widgetOpacity by viewModel.widgetOpacity.collectAsState()
-    val widgetShowCompleted by viewModel.widgetShowCompleted.collectAsState()
-    val widgetLayoutDensity by viewModel.widgetLayoutDensity.collectAsState()
-    val widgetSorting by viewModel.widgetSorting.collectAsState()
-    val streak by viewModel.streak.collectAsState()
+    val widgetState by viewModel.widgetSettingsState.collectAsState()
+    val widgetBg = widgetState.background
+    val widgetOpacity = widgetState.opacity
+    val widgetShowCompleted = widgetState.showCompleted
+    val widgetLayoutDensity = widgetState.layoutDensity
+    val widgetSorting = widgetState.sorting
 
-    val remindersEnabled by viewModel.remindersEnabled.collectAsState()
-    val morningEnabled by viewModel.reminderMorningEnabled.collectAsState()
-    val morningHour by viewModel.reminderMorningHour.collectAsState()
-    val morningMinute by viewModel.reminderMorningMinute.collectAsState()
-    val middayEnabled by viewModel.reminderMiddayEnabled.collectAsState()
-    val middayHour by viewModel.reminderMiddayHour.collectAsState()
-    val middayMinute by viewModel.reminderMiddayMinute.collectAsState()
-    val eveningEnabled by viewModel.reminderEveningEnabled.collectAsState()
-    val eveningHour by viewModel.reminderEveningHour.collectAsState()
-    val eveningMinute by viewModel.reminderEveningMinute.collectAsState()
+    val streak by viewModel.streak.collectAsState()
+    val vacationMode by viewModel.vacationMode.collectAsState()
+
+    val reminderState by viewModel.reminderSettingsState.collectAsState()
+    val remindersEnabled = reminderState.enabled
+    val morningEnabled = reminderState.morningEnabled
+    val morningHour = reminderState.morningHour
+    val morningMinute = reminderState.morningMinute
+    val middayEnabled = reminderState.middayEnabled
+    val middayHour = reminderState.middayHour
+    val middayMinute = reminderState.middayMinute
+    val eveningEnabled = reminderState.eveningEnabled
+    val eveningHour = reminderState.eveningHour
+    val eveningMinute = reminderState.eveningMinute
 
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -471,6 +477,13 @@ fun SettingsScreen(
                 )
             }
 
+            SettingToggle(
+                title = stringResource(R.string.settings_vacation_title),
+                subtitle = stringResource(R.string.settings_vacation_subtitle),
+                checked = vacationMode,
+                onCheckedChange = { viewModel.setVacationMode(it) },
+            )
+
             Spacer(modifier = Modifier.height(32.dp))
 
             val uriHandler = LocalUriHandler.current
@@ -716,7 +729,7 @@ private fun ReminderSlotRow(
     onTimeChange: (Int, Int) -> Unit,
 ) {
     var showTimePicker by remember { mutableStateOf(false) }
-    val timeText = String.format("%02d:%02d", hour, minute)
+    val timeText = remember(hour, minute) { String.format("%02d:%02d", hour, minute) }
     val alpha = if (masterEnabled) 1f else 0.4f
 
     Row(
@@ -915,16 +928,18 @@ private fun ThemePicker(
         val bgColor: Color,
     )
 
-    val themes = listOf(
-        ThemeOption("SYSTEM", R.string.theme_system, Color(0xFF6750A4), Color(0xFF1C1B1F)),
-        ThemeOption("CATPPUCCIN", R.string.theme_catppuccin, Color(0xFFCBA6F7), Color(0xFF1E1E2E)),
-        ThemeOption("ROSE_PINE", R.string.theme_rose_pine, Color(0xFFC4A7E7), Color(0xFF191724)),
-        ThemeOption("GRUVBOX", R.string.theme_gruvbox, Color(0xFFD79921), Color(0xFF282828)),
-        ThemeOption("TOKYO_NIGHT", R.string.theme_tokyo_night, Color(0xFF7AA2F7), Color(0xFF1A1B26)),
-        ThemeOption("DRACULA", R.string.theme_dracula, Color(0xFFBD93F9), Color(0xFF282A36)),
-        ThemeOption("KANAGAWA", R.string.theme_kanagawa, Color(0xFF7E9CD8), Color(0xFF1F1F28)),
-        ThemeOption("OXOCARBON", R.string.theme_oxocarbon, Color(0xFFBE95FF), Color(0xFF161616)),
-    )
+    val themes = remember {
+        listOf(
+            ThemeOption("SYSTEM", R.string.theme_system, Color(0xFF6750A4), Color(0xFF1C1B1F)),
+            ThemeOption("CATPPUCCIN", R.string.theme_catppuccin, Color(0xFFCBA6F7), Color(0xFF1E1E2E)),
+            ThemeOption("ROSE_PINE", R.string.theme_rose_pine, Color(0xFFC4A7E7), Color(0xFF191724)),
+            ThemeOption("GRUVBOX", R.string.theme_gruvbox, Color(0xFFD79921), Color(0xFF282828)),
+            ThemeOption("TOKYO_NIGHT", R.string.theme_tokyo_night, Color(0xFF7AA2F7), Color(0xFF1A1B26)),
+            ThemeOption("DRACULA", R.string.theme_dracula, Color(0xFFBD93F9), Color(0xFF282A36)),
+            ThemeOption("KANAGAWA", R.string.theme_kanagawa, Color(0xFF7E9CD8), Color(0xFF1F1F28)),
+            ThemeOption("OXOCARBON", R.string.theme_oxocarbon, Color(0xFFBE95FF), Color(0xFF161616)),
+        )
+    }
 
     Row(
         modifier = Modifier.horizontalScroll(rememberScrollState()),

@@ -46,10 +46,11 @@ android {
 
     buildTypes {
         debug {
-            isDebuggable = false
+            isDebuggable = true
         }
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             signingConfig = signingConfigs.findByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -132,6 +133,9 @@ dependencies {
     implementation(libs.google.api.services.tasks) {
         exclude(group = "org.apache.httpcomponents")
     }
+
+    // Baseline Profile
+    implementation(libs.profileinstaller)
 
     // DataStore
     implementation(libs.datastore.preferences)

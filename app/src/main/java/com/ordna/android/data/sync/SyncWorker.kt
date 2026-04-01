@@ -2,6 +2,7 @@ package com.ordna.android.data.sync
 
 import android.content.Context
 import androidx.hilt.work.HiltWorker
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -41,6 +42,7 @@ class SyncWorker @AssistedInject constructor(
 
             val request = PeriodicWorkRequestBuilder<SyncWorker>(15, TimeUnit.MINUTES)
                 .setConstraints(constraints)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
                 .build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
