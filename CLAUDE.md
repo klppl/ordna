@@ -41,7 +41,7 @@ GitHub Actions workflows (manual dispatch):
 
 ## Architecture
 
-Single-activity MVVM app using Jetpack Compose, Hilt DI, and the Google Tasks API. Package: `com.ordna.android`. Displays overdue + today tasks with completion tracking.
+Single-activity MVVM app using Jetpack Compose, Hilt DI, and the Google Tasks API. Package: `io.github.klppl.ordna`. Displays overdue + today tasks with completion tracking.
 
 **Data flow:** Compose UI → ViewModel (StateFlow) → Repository → Room (local cache) + Google Tasks API (remote)
 

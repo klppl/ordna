@@ -16,11 +16,11 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "com.ordna.android"
+    namespace = "io.github.klppl.ordna"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.ordna.android"
+        applicationId = "io.github.klppl.ordna"
         minSdk = 26
         targetSdk = 35
         versionCode = 2
