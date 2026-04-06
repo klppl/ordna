@@ -44,12 +44,12 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Rename APK
-        run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/taskig-v${{ inputs.version_name }}.apk
+        run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/ordna-v${{ inputs.version_name }}.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ inputs.version_name }}
-          name: Taskig v${{ inputs.version_name }}
-          files: app/build/outputs/apk/release/taskig-v${{ inputs.version_name }}.apk
+          name: Ordna v${{ inputs.version_name }}
+          files: app/build/outputs/apk/release/ordna-v${{ inputs.version_name }}.apk
           generate_release_notes: true
