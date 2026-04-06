@@ -2,6 +2,8 @@
 
 A daily task app that does less, on purpose.
 
+[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="60">](http://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/klppl/ordna/releases)
+
 ## Why
 
 I tried all the todo apps. They want to be project managers, habit trackers, second brains, or all three. I just wanted to see what I need to do today, check things off, and move on.
