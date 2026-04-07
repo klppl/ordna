@@ -31,6 +31,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Add
@@ -387,6 +388,13 @@ fun TodayScreen(
             onDismiss = { detailTask = null },
             onNotesChanged = { notes ->
                 viewModel.updateTaskNotes(task, notes)
+            },
+            onTitleChanged = { title ->
+                viewModel.updateTaskTitle(task, title)
+            },
+            onDelete = {
+                viewModel.deleteTask(task)
+                detailTask = null
             },
         )
     }
@@ -955,13 +963,43 @@ private fun TaskDetailSheet(
     task: TaskEntity,
     onDismiss: () -> Unit,
     onNotesChanged: (String?) -> Unit,
+    onTitleChanged: (String) -> Unit,
+    onDelete: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var titleText by remember(task.id) { mutableStateOf(task.title) }
     var notesText by remember(task.id) { mutableStateOf(task.notes ?: "") }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
     val dayFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirm = false
+                    onDelete()
+                }) {
+                    Text(stringResource(R.string.task_detail_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+            text = {
+                Text(stringResource(R.string.task_detail_delete_confirm, task.title))
+            },
+        )
+    }
 
     ModalBottomSheet(
         onDismissRequest = {
+            val trimmedTitle = titleText.trim()
+            if (trimmedTitle.isNotEmpty() && trimmedTitle != task.title) {
+                onTitleChanged(trimmedTitle)
+            }
             val newNotes = notesText.trim().ifBlank { null }
             if (newNotes != task.notes) {
                 onNotesChanged(newNotes)
@@ -976,15 +1014,19 @@ private fun TaskDetailSheet(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
         ) {
-            // Title
-            Text(
-                text = task.title,
-                style = MaterialTheme.typography.titleLarge,
+            // Editable title
+            OutlinedTextField(
+                value = titleText,
+                onValueChange = { titleText = it },
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = MaterialTheme.typography.titleLarge,
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             )
 
             Spacer(Modifier.height(8.dp))
 
-            // List badge + due date
+            // List badge + due date + delete button
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ListBadge(listTitle = task.listTitle, color = Color(task.listColor))
                 task.due?.let { due ->
@@ -993,6 +1035,14 @@ private fun TaskDetailSheet(
                         text = stringResource(R.string.task_detail_due, due.format(dayFormat)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = { showDeleteConfirm = true }) {
+                    Icon(
+                        imageVector = Icons.Outlined.Delete,
+                        contentDescription = stringResource(R.string.task_detail_delete),
+                        tint = MaterialTheme.colorScheme.error,
                     )
                 }
             }

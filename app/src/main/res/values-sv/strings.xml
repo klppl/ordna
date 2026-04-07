@@ -32,8 +32,11 @@
     <string name="streak_days">%1$d dagar i rad</string>
     <string name="error_sync_failed">Synkronisering misslyckades</string>
     <string name="error_task_update_failed">Kunde inte uppdatera uppgift</string>
+    <string name="error_task_delete_failed">Kunde inte ta bort uppgift</string>
     <string name="task_detail_notes_hint">Lägg till en anteckning</string>
     <string name="task_detail_due">Ska göras %1$s</string>
+    <string name="task_detail_delete">Ta bort uppgift</string>
+    <string name="task_detail_delete_confirm">Ta bort \"%1$s\"?</string>
     <string name="last_sync_just_now">Synkad just nu</string>
     <string name="last_sync_minutes">Synkad för %1$d min sedan</string>
     <string name="last_sync_hours">Synkad för %1$d h sedan</string>

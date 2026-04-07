@@ -55,6 +55,9 @@ interface TaskDao {
     @Query("UPDATE tasks SET status = :status, completedAt = :completedAt WHERE id = :taskId")
     suspend fun updateTaskStatus(taskId: String, status: String, completedAt: java.time.Instant?)
 
+    @Query("UPDATE tasks SET title = :title WHERE id = :taskId")
+    suspend fun updateTaskTitle(taskId: String, title: String)
+
     @Query("UPDATE tasks SET due = :due WHERE id = :taskId")
     suspend fun updateTaskDue(taskId: String, due: LocalDate)
 

@@ -163,6 +163,22 @@ class TodayViewModel @Inject constructor(
         }
     }
 
+    fun updateTaskTitle(task: TaskEntity, title: String) {
+        viewModelScope.launch {
+            repository.updateTaskTitle(task, title).onFailure { e ->
+                _error.value = e.localizedMessage ?: getString(R.string.error_task_update_failed)
+            }
+        }
+    }
+
+    fun deleteTask(task: TaskEntity) {
+        viewModelScope.launch {
+            repository.deleteTask(task).onFailure { e ->
+                _error.value = e.localizedMessage ?: getString(R.string.error_task_delete_failed)
+            }
+        }
+    }
+
     fun updateTaskNotes(task: TaskEntity, notes: String?) {
         viewModelScope.launch {
             repository.updateTaskNotes(task, notes).onFailure { e ->

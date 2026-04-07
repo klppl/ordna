@@ -117,6 +117,16 @@ class GoogleTasksApi @Inject constructor(
         service.tasks().update(listId, taskId, task).execute()
     }
 
+    suspend fun updateTaskTitle(
+        accountEmail: String,
+        listId: String,
+        taskId: String,
+        title: String,
+    ) = withContext(Dispatchers.IO) {
+        val patch = Task().apply { setTitle(title) }
+        getService(accountEmail).tasks().patch(listId, taskId, patch).execute()
+    }
+
     suspend fun updateTaskDue(
         accountEmail: String,
         listId: String,
@@ -128,6 +138,14 @@ class GoogleTasksApi @Inject constructor(
         // Google Tasks expects due as RFC 3339 date-time at midnight UTC
         task.due = "${newDue}T00:00:00.000Z"
         service.tasks().update(listId, taskId, task).execute()
+    }
+
+    suspend fun deleteTask(
+        accountEmail: String,
+        listId: String,
+        taskId: String,
+    ) = withContext(Dispatchers.IO) {
+        getService(accountEmail).tasks().delete(listId, taskId).execute()
     }
 
     companion object {

@@ -113,6 +113,39 @@ class TaskRepository @Inject constructor(
         }
     }
 
+    suspend fun updateTaskTitle(task: TaskEntity, title: String): Result<Unit> = runCatching {
+        val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
+
+        // Optimistic update
+        taskDao.updateTaskTitle(task.id, title)
+        updateAllWidgets(context)
+
+        try {
+            api.updateTaskTitle(email, task.listId, task.id, title)
+        } catch (e: Exception) {
+            // Revert on failure
+            taskDao.updateTaskTitle(task.id, task.title)
+            throw e
+        }
+    }
+
+    suspend fun deleteTask(task: TaskEntity): Result<Unit> = runCatching {
+        val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
+
+        // Optimistic delete
+        taskDao.deleteById(task.id)
+        updateAllWidgets(context)
+
+        try {
+            api.deleteTask(email, task.listId, task.id)
+        } catch (e: Exception) {
+            // Revert on failure — re-insert the task
+            taskDao.upsertAll(listOf(task))
+            updateAllWidgets(context)
+            throw e
+        }
+    }
+
     suspend fun updateTaskNotes(task: TaskEntity, notes: String?): Result<Unit> = runCatching {
         val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
 
