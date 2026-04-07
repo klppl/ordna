@@ -5,11 +5,18 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import io.github.klppl.ordna.data.local.TaskDao
 import io.github.klppl.ordna.data.local.TaskDatabase
 import io.github.klppl.ordna.data.local.TaskEntity
 import io.github.klppl.ordna.data.remote.GoogleTasksApi
-import io.github.klppl.ordna.widget.PendingToggles
+import io.github.klppl.ordna.data.sync.CreateTaskWorker
+import io.github.klppl.ordna.data.sync.MutationWorker
+import io.github.klppl.ordna.widget.PendingOperations
 import io.github.klppl.ordna.widget.updateAllWidgets
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +27,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 import java.time.LocalDate
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -74,19 +82,36 @@ class TaskRepository @Inject constructor(
         updateAllWidgets(context)
     }
 
+    private val networkConstraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
+
+    private fun enqueueMutation(taskId: String, listId: String, operation: String, extras: Map<String, String?> = emptyMap()) {
+        PendingOperations.add(taskId)
+        val data = workDataOf(
+            "task_id" to taskId,
+            "list_id" to listId,
+            "operation" to operation,
+            *extras.map { (k, v) -> k to v }.toTypedArray(),
+        )
+        val work = OneTimeWorkRequestBuilder<MutationWorker>()
+            .setInputData(data)
+            .setConstraints(networkConstraints)
+            .setBackoffCriteria(androidx.work.BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+            .build()
+        WorkManager.getInstance(context).enqueue(work)
+    }
+
     suspend fun postponeTask(task: TaskEntity, newDue: LocalDate): Result<Unit> = runCatching {
         val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
 
-        // Optimistic update — move the task in local DB immediately
         taskDao.updateTaskDue(task.id, newDue)
         updateAllWidgets(context)
 
         try {
             api.updateTaskDue(email, task.listId, task.id, newDue)
-        } catch (e: Exception) {
-            // Revert on failure
-            task.due?.let { taskDao.updateTaskDue(task.id, it) }
-            throw e
+        } catch (_: Exception) {
+            enqueueMutation(task.id, task.listId, "due", mapOf("due" to newDue.toString()))
         }
     }
 
@@ -94,70 +119,54 @@ class TaskRepository @Inject constructor(
         val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
         val isCompleting = task.status == "needsAction"
 
-        // Optimistic update
         val now = if (isCompleting) Instant.now() else null
         val newStatus = if (isCompleting) "completed" else "needsAction"
         taskDao.updateTaskStatus(task.id, newStatus, now)
         updateAllWidgets(context)
 
         try {
-            if (isCompleting) {
-                api.completeTask(email, task.listId, task.id)
-            } else {
-                api.uncompleteTask(email, task.listId, task.id)
-            }
-        } catch (e: Exception) {
-            // Revert on failure
-            taskDao.updateTaskStatus(task.id, task.status, task.completedAt)
-            throw e
+            if (isCompleting) api.completeTask(email, task.listId, task.id)
+            else api.uncompleteTask(email, task.listId, task.id)
+        } catch (_: Exception) {
+            enqueueMutation(task.id, task.listId, if (isCompleting) "complete" else "uncomplete")
         }
     }
 
     suspend fun updateTaskTitle(task: TaskEntity, title: String): Result<Unit> = runCatching {
         val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
 
-        // Optimistic update
         taskDao.updateTaskTitle(task.id, title)
         updateAllWidgets(context)
 
         try {
             api.updateTaskTitle(email, task.listId, task.id, title)
-        } catch (e: Exception) {
-            // Revert on failure
-            taskDao.updateTaskTitle(task.id, task.title)
-            throw e
+        } catch (_: Exception) {
+            enqueueMutation(task.id, task.listId, "title", mapOf("title" to title))
         }
     }
 
     suspend fun deleteTask(task: TaskEntity): Result<Unit> = runCatching {
         val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
 
-        // Optimistic delete
         taskDao.deleteById(task.id)
         updateAllWidgets(context)
 
         try {
             api.deleteTask(email, task.listId, task.id)
-        } catch (e: Exception) {
-            // Revert on failure — re-insert the task
-            taskDao.upsertAll(listOf(task))
-            updateAllWidgets(context)
-            throw e
+        } catch (_: Exception) {
+            enqueueMutation(task.id, task.listId, "delete")
         }
     }
 
     suspend fun updateTaskNotes(task: TaskEntity, notes: String?): Result<Unit> = runCatching {
         val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
 
-        // Optimistic update
         taskDao.updateTaskNotes(task.id, notes)
 
         try {
             api.updateTaskNotes(email, task.listId, task.id, notes)
-        } catch (e: Exception) {
-            // Revert on failure
-            taskDao.updateTaskNotes(task.id, task.notes)
-            throw e
+        } catch (_: Exception) {
+            enqueueMutation(task.id, task.listId, "notes", mapOf("notes" to notes))
         }
     }
 
@@ -167,7 +176,6 @@ class TaskRepository @Inject constructor(
         val tempId = "temp-${java.util.UUID.randomUUID()}"
         val listColor = GoogleTasksApi.colorForListId(listId)
 
-        // Optimistic insert
         val tempEntity = TaskEntity(
             id = tempId,
             title = title,
@@ -186,7 +194,6 @@ class TaskRepository @Inject constructor(
 
         try {
             val created = api.createTask(email, listId, title, today)
-            // Replace temp entity with server entity (can't update PK, so delete + insert)
             taskDao.deleteById(tempId)
             taskDao.upsertAll(listOf(
                 tempEntity.copy(
@@ -196,11 +203,21 @@ class TaskRepository @Inject constructor(
                 )
             ))
             updateAllWidgets(context)
-        } catch (e: Exception) {
-            // Revert optimistic insert
-            taskDao.deleteById(tempId)
-            updateAllWidgets(context)
-            throw e
+        } catch (_: Exception) {
+            // Keep temp task visible, enqueue retry with network constraint
+            PendingOperations.add(tempId)
+            val work = OneTimeWorkRequestBuilder<CreateTaskWorker>()
+                .setInputData(workDataOf(
+                    "temp_id" to tempId,
+                    "title" to title,
+                    "list_id" to listId,
+                    "list_title" to listTitle,
+                    "due_date" to today.toString(),
+                ))
+                .setConstraints(networkConstraints)
+                .setBackoffCriteria(androidx.work.BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                .build()
+            WorkManager.getInstance(context).enqueue(work)
         }
     }
 
@@ -276,14 +293,15 @@ class TaskRepository @Inject constructor(
                 }
             }
 
-            // Preserve optimistic updates for tasks with in-flight widget toggles.
+            // Preserve optimistic updates for tasks with in-flight operations.
             // Without this, sync would overwrite local state with stale API data.
-            val pendingIds = PendingToggles.snapshot()
+            val pendingIds = PendingOperations.snapshot()
             if (pendingIds.isNotEmpty()) {
                 val pendingLocal = pendingIds.mapNotNull { dao.getTaskById(it) }.associateBy { it.id }
                 for (i in allTasks.indices) {
                     pendingLocal[allTasks[i].id]?.let { local ->
-                        allTasks[i] = allTasks[i].copy(status = local.status, completedAt = local.completedAt)
+                        // Replace entirely — any field could have been optimistically updated
+                        allTasks[i] = local
                     }
                 }
                 // Also ensure pending tasks that sync excluded (e.g. just-completed) stay in the list

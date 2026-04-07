@@ -38,44 +38,48 @@ class WidgetToggleWorker @AssistedInject constructor(
             } else {
                 api.uncompleteTask(email, listId, taskId)
             }
-            PendingToggles.remove(taskId)
+            PendingOperations.remove(taskId)
             Result.success()
         } catch (_: Exception) {
-            PendingToggles.remove(taskId)
-            // API failed — revert optimistic update
-            val dao = TaskDatabase.getInstance(applicationContext).taskDao()
-            val revertStatus = if (completing) "needsAction" else "completed"
-            val revertCompleted = if (completing) null else java.time.Instant.now()
-            dao.updateTaskStatus(taskId, revertStatus, revertCompleted)
-            updateAllWidgets(applicationContext)
+            if (runAttemptCount >= 3) {
+                // Permanent failure — revert and notify
+                PendingOperations.remove(taskId)
+                val dao = TaskDatabase.getInstance(applicationContext).taskDao()
+                val revertStatus = if (completing) "needsAction" else "completed"
+                val revertCompleted = if (completing) null else java.time.Instant.now()
+                dao.updateTaskStatus(taskId, revertStatus, revertCompleted)
+                updateAllWidgets(applicationContext)
 
-            // Notify user of the failure
-            try {
-                val tapIntent = Intent(applicationContext, MainActivity::class.java).apply {
-                    putExtra("SYNC_ON_LAUNCH", true)
-                    putExtra("NAVIGATE_TODAY", true)
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                try {
+                    val tapIntent = Intent(applicationContext, MainActivity::class.java).apply {
+                        putExtra("SYNC_ON_LAUNCH", true)
+                        putExtra("NAVIGATE_TODAY", true)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    }
+                    val tapPendingIntent = PendingIntent.getActivity(
+                        applicationContext,
+                        taskId.hashCode(),
+                        tapIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    )
+
+                    val notification = NotificationCompat.Builder(applicationContext, OrdnaApplication.SYNC_FAIL_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.ic_launcher_foreground)
+                        .setContentTitle(applicationContext.getString(R.string.sync_fail_title))
+                        .setContentText(applicationContext.getString(R.string.sync_fail_body, taskTitle))
+                        .setContentIntent(tapPendingIntent)
+                        .setAutoCancel(true)
+                        .build()
+                    NotificationManagerCompat.from(applicationContext).notify(taskId.hashCode(), notification)
+                } catch (_: SecurityException) {
+                    // No notification permission — silent revert
                 }
-                val tapPendingIntent = PendingIntent.getActivity(
-                    applicationContext,
-                    taskId.hashCode(),
-                    tapIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                )
 
-                val notification = NotificationCompat.Builder(applicationContext, OrdnaApplication.SYNC_FAIL_CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
-                    .setContentTitle(applicationContext.getString(R.string.sync_fail_title))
-                    .setContentText(applicationContext.getString(R.string.sync_fail_body, taskTitle))
-                    .setContentIntent(tapPendingIntent)
-                    .setAutoCancel(true)
-                    .build()
-                NotificationManagerCompat.from(applicationContext).notify(taskId.hashCode(), notification)
-            } catch (_: SecurityException) {
-                // No notification permission — silent revert
+                Result.failure()
+            } else {
+                // Retry — optimistic update stays, PendingOperations protects from sync
+                Result.retry()
             }
-
-            Result.failure()
         }
     }
 }

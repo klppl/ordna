@@ -421,12 +421,12 @@ class ToggleTaskAction : ActionCallback {
         val completedAt = if (isCompleting) java.time.Instant.now() else null
 
         // Mark as pending so sync won't overwrite this optimistic update
-        PendingToggles.add(taskId)
+        PendingOperations.add(taskId)
 
         // Optimistic update — move task immediately in the UI
         dao.updateTaskStatus(taskId, newStatus, completedAt)
 
-        // Enqueue background API call
+        // Enqueue background API call with network constraint + retry
         val workRequest = OneTimeWorkRequestBuilder<WidgetToggleWorker>()
             .setInputData(workDataOf(
                 "task_id" to taskId,
@@ -434,6 +434,14 @@ class ToggleTaskAction : ActionCallback {
                 "completing" to isCompleting,
                 "task_title" to task.title,
             ))
+            .setConstraints(
+                androidx.work.Constraints.Builder()
+                    .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+                    .build()
+            )
+            .setBackoffCriteria(
+                androidx.work.BackoffPolicy.EXPONENTIAL, 30, java.util.concurrent.TimeUnit.SECONDS
+            )
             .build()
         WorkManager.getInstance(context).enqueue(workRequest)
 
