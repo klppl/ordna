@@ -420,6 +420,9 @@ class ToggleTaskAction : ActionCallback {
         val newStatus = if (isCompleting) "completed" else "needsAction"
         val completedAt = if (isCompleting) java.time.Instant.now() else null
 
+        // Mark as pending so sync won't overwrite this optimistic update
+        PendingToggles.add(taskId)
+
         // Optimistic update — move task immediately in the UI
         dao.updateTaskStatus(taskId, newStatus, completedAt)
 

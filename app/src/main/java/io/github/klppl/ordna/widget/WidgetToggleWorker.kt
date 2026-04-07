@@ -38,8 +38,10 @@ class WidgetToggleWorker @AssistedInject constructor(
             } else {
                 api.uncompleteTask(email, listId, taskId)
             }
+            PendingToggles.remove(taskId)
             Result.success()
         } catch (_: Exception) {
+            PendingToggles.remove(taskId)
             // API failed — revert optimistic update
             val dao = TaskDatabase.getInstance(applicationContext).taskDao()
             val revertStatus = if (completing) "needsAction" else "completed"

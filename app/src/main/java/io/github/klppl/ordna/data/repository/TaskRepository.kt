@@ -9,6 +9,7 @@ import io.github.klppl.ordna.data.local.TaskDao
 import io.github.klppl.ordna.data.local.TaskDatabase
 import io.github.klppl.ordna.data.local.TaskEntity
 import io.github.klppl.ordna.data.remote.GoogleTasksApi
+import io.github.klppl.ordna.widget.PendingToggles
 import io.github.klppl.ordna.widget.updateAllWidgets
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -238,6 +239,24 @@ class TaskRepository @Inject constructor(
                                     ?: Instant.now(),
                             )
                         )
+                    }
+                }
+            }
+
+            // Preserve optimistic updates for tasks with in-flight widget toggles.
+            // Without this, sync would overwrite local state with stale API data.
+            val pendingIds = PendingToggles.snapshot()
+            if (pendingIds.isNotEmpty()) {
+                val pendingLocal = pendingIds.mapNotNull { dao.getTaskById(it) }.associateBy { it.id }
+                for (i in allTasks.indices) {
+                    pendingLocal[allTasks[i].id]?.let { local ->
+                        allTasks[i] = allTasks[i].copy(status = local.status, completedAt = local.completedAt)
+                    }
+                }
+                // Also ensure pending tasks that sync excluded (e.g. just-completed) stay in the list
+                for ((id, local) in pendingLocal) {
+                    if (allTasks.none { it.id == id }) {
+                        allTasks.add(local)
                     }
                 }
             }
