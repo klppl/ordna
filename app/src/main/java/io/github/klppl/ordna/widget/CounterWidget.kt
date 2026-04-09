@@ -23,11 +23,14 @@ import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -117,8 +120,16 @@ private fun CounterContent(
             (settings.background == WidgetBackground.AUTO || settings.background == WidgetBackground.WHITE)
     val textColor = if (isLight) ColorProvider(Color(0xFF1C1B1F)) else ColorProvider(Color(0xFFE6E1E5))
     val subtextColor = if (isLight) ColorProvider(Color(0xFF49454F)) else ColorProvider(Color(0xFFCAC4D0))
+
+    // Rail and progress bar share one accent. Theme primary if a theme is set,
+    // else fallback purple matching the rest of the app.
     val accentColor = themeColors?.colorScheme?.primary?.let { ColorProvider(it) }
         ?: ColorProvider(Color(0xFF6750A4))
+    // Opaque variant of the accent for the rail — must NOT respect the user's
+    // opacity slider. The rail is the visual anchor; dissolving it with the
+    // background defeats the whole point.
+    val railOpaqueColor = themeColors?.colorScheme?.primary ?: Color(0xFF6750A4)
+
     val trackColor = if (isLight) ColorProvider(Color(0xFFE0E0E0)) else ColorProvider(Color(0xFF444444))
 
     Box(
@@ -127,41 +138,68 @@ private fun CounterContent(
             .cornerRadius(16.dp)
             .background(bgColor)
             .clickable(actionStartActivity<MainActivity>()),
-        contentAlignment = Alignment.Center,
     ) {
-        Column(
-            modifier = GlanceModifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = if (remaining > 0) "$remaining" else ctx.getString(R.string.counter_widget_done),
-                style = TextStyle(
-                    fontSize = if (remaining > 0) 32.sp else 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = textColor,
-                ),
-            )
-            if (remaining > 0) {
-                Text(
-                    text = ctx.getString(R.string.counter_widget_left),
-                    style = TextStyle(fontSize = 12.sp, color = subtextColor),
-                )
-            } else if (streak > 0) {
-                Spacer(modifier = GlanceModifier.height(4.dp))
-                Text(
-                    text = ctx.getString(R.string.widget_streak, streak),
-                    style = TextStyle(fontSize = 11.sp, color = subtextColor),
-                )
-            }
-            if (totalCount > 0) {
-                Spacer(modifier = GlanceModifier.height(8.dp))
-                LinearProgressIndicator(
-                    progress = completedCount.toFloat() / totalCount,
-                    modifier = GlanceModifier.fillMaxWidth().height(4.dp),
-                    color = accentColor,
-                    backgroundColor = trackColor,
-                )
+        Row(modifier = GlanceModifier.fillMaxSize()) {
+            // Accent rail — flush with the left edge, full height. Parent Box's
+            // cornerRadius(16dp) clips its top-left/bottom-left corners.
+            Box(
+                modifier = GlanceModifier
+                    .width(5.dp)
+                    .fillMaxHeight()
+                    .background(railOpaqueColor),
+            ) {}
+
+            // Content column — left-aligned text, bar pinned to the bottom.
+            Column(
+                modifier = GlanceModifier
+                    .fillMaxSize()
+                    .padding(start = 12.dp, top = 10.dp, end = 12.dp, bottom = 10.dp),
+                horizontalAlignment = Alignment.Start,
+                // When the progress bar is present, let the weighted spacer below push it
+                // to the bottom while text stays at the top. When there's no bar, center
+                // the text vertically so state (d) doesn't hang from the top of the rail.
+                verticalAlignment = if (totalCount > 0) Alignment.Top else Alignment.CenterVertically,
+            ) {
+                if (remaining > 0) {
+                    Text(
+                        text = "$remaining",
+                        style = TextStyle(
+                            fontSize = 34.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor,
+                        ),
+                    )
+                    Text(
+                        text = ctx.getString(R.string.counter_widget_left),
+                        style = TextStyle(fontSize = 12.sp, color = subtextColor),
+                    )
+                } else {
+                    Text(
+                        text = ctx.getString(R.string.counter_widget_done),
+                        style = TextStyle(
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor,
+                        ),
+                    )
+                    if (streak > 0) {
+                        Spacer(modifier = GlanceModifier.height(4.dp))
+                        Text(
+                            text = ctx.getString(R.string.widget_streak, streak),
+                            style = TextStyle(fontSize = 11.sp, color = subtextColor),
+                        )
+                    }
+                }
+
+                if (totalCount > 0) {
+                    Spacer(modifier = GlanceModifier.defaultWeight())
+                    LinearProgressIndicator(
+                        progress = completedCount.toFloat() / totalCount,
+                        modifier = GlanceModifier.fillMaxWidth().height(8.dp),
+                        color = accentColor,
+                        backgroundColor = trackColor,
+                    )
+                }
             }
         }
     }
