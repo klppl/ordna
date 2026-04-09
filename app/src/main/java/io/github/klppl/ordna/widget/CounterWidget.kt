@@ -117,7 +117,7 @@ private fun CounterContent(
             (settings.background == WidgetBackground.AUTO || settings.background == WidgetBackground.WHITE)
     val textColor = if (isLight) ColorProvider(Color(0xFF1C1B1F)) else ColorProvider(Color(0xFFE6E1E5))
     val subtextColor = if (isLight) ColorProvider(Color(0xFF49454F)) else ColorProvider(Color(0xFFCAC4D0))
-    val barColor = themeColors?.colorScheme?.primary?.let { ColorProvider(it) }
+    val accentColor = themeColors?.colorScheme?.primary?.let { ColorProvider(it) }
         ?: ColorProvider(Color(0xFF6750A4))
     val trackColor = if (isLight) ColorProvider(Color(0xFFE0E0E0)) else ColorProvider(Color(0xFF444444))
 
@@ -159,7 +159,7 @@ private fun CounterContent(
                 LinearProgressIndicator(
                     progress = completedCount.toFloat() / totalCount,
                     modifier = GlanceModifier.fillMaxWidth().height(4.dp),
-                    color = barColor,
+                    color = accentColor,
                     backgroundColor = trackColor,
                 )
             }
