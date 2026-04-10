@@ -1249,8 +1249,13 @@ private fun CreateTaskSheet(
     var title by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
 
-    val initialList = availableLists.find { it.id == defaultListId }
-        ?: availableLists.firstOrNull()
+    val initialList = if (defaultListId != null) {
+        availableLists.find { it.id == defaultListId }
+    } else if (availableLists.size == 1) {
+        availableLists.first()
+    } else {
+        null
+    }
     var selectedList by remember { mutableStateOf(initialList) }
 
     val canSubmit = title.isNotBlank() && selectedList != null

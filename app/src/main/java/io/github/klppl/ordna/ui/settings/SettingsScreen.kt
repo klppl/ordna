@@ -343,6 +343,7 @@ fun SettingsScreen(
                 isLoading = listsLoading,
                 onExpand = { viewModel.loadAvailableLists() },
                 onSelect = { viewModel.setCreateList(it.id, it.title) },
+                onClear = { viewModel.clearCreateList() },
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -879,6 +880,7 @@ private fun ShareListPicker(
     isLoading: Boolean,
     onExpand: () -> Unit,
     onSelect: (TaskListOption) -> Unit,
+    onClear: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -903,6 +905,15 @@ private fun ShareListPicker(
             expanded = expanded && availableLists.isNotEmpty(),
             onDismissRequest = { expanded = false },
         ) {
+            if (onClear != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.settings_share_list_none)) },
+                    onClick = {
+                        onClear()
+                        expanded = false
+                    },
+                )
+            }
             availableLists.forEach { list ->
                 DropdownMenuItem(
                     text = { Text(list.title) },

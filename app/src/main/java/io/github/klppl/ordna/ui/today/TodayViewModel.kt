@@ -61,10 +61,10 @@ class TodayViewModel @Inject constructor(
     val availableLists: StateFlow<List<io.github.klppl.ordna.ui.settings.TaskListOption>> = _availableLists.asStateFlow()
 
     val createListId: StateFlow<String?> = settingsRepository.createListId
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val createListTitle: StateFlow<String?> = settingsRepository.createListTitle
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val uiState: StateFlow<TodayUiState> = combine(
         combine(

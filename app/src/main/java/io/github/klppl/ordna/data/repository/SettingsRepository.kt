@@ -184,6 +184,13 @@ class SettingsRepository @Inject constructor(
         }
     }
 
+    suspend fun clearCreateList() {
+        context.settingsDataStore.edit {
+            it.remove(createListIdKey)
+            it.remove(createListTitleKey)
+        }
+    }
+
     suspend fun getCreateListId(): String? =
         context.settingsDataStore.data.first()[createListIdKey]
 

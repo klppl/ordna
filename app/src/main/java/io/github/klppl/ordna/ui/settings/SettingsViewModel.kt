@@ -282,6 +282,10 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setCreateList(listId, listTitle) }
     }
 
+    fun clearCreateList() {
+        viewModelScope.launch { settingsRepository.clearCreateList() }
+    }
+
     fun loadAvailableLists() {
         if (_availableLists.value.isNotEmpty() || _listsLoading.value) return
         viewModelScope.launch {
