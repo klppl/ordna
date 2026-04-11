@@ -74,6 +74,7 @@ class OrdnaWidget : GlanceAppWidget() {
         val settingsFlow = SettingsRepository.widgetSettingsFlow(context)
         val listOrderFlow = SettingsRepository.listOrderFlow(context)
         val streakFlow = SettingsRepository.streakFlow(context)
+        val vacationFlow = SettingsRepository.vacationModeFlow(context)
 
         // Snapshot data eagerly so the first frame renders real content
         // instead of empty lists. Flows still drive live updates afterwards.
@@ -83,6 +84,7 @@ class OrdnaWidget : GlanceAppWidget() {
         val initialSettings = settingsFlow.first()
         val initialListOrder = listOrderFlow.first()
         val initialStreak = streakFlow.first()
+        val initialVacation = vacationFlow.first()
 
         provideContent {
             val overdueTasks by dao.getOverdueTasks(today).collectAsState(initial = initialOverdue)
@@ -91,6 +93,7 @@ class OrdnaWidget : GlanceAppWidget() {
             val widgetSettings by settingsFlow.collectAsState(initial = initialSettings)
             val listOrder by listOrderFlow.collectAsState(initial = initialListOrder)
             val streak by streakFlow.collectAsState(initial = initialStreak)
+            val vacationMode by vacationFlow.collectAsState(initial = initialVacation)
 
             // Derive display properties from current settings
             val appTheme = AppTheme.entries.find { it.name == widgetSettings.theme } ?: AppTheme.SYSTEM
@@ -110,8 +113,9 @@ class OrdnaWidget : GlanceAppWidget() {
             val isLight = if (themeColors != null) false else isLightBackground(bg)
             val overdueColor = themeColors?.overdueRed ?: DefaultOverdueColor
             val completedColor = themeColors?.completedGreen ?: DefaultCompletedColor
-            val primaryBarColor = themeColors?.colorScheme?.primary?.let { ColorProvider(it) }
-                ?: ColorProvider(Color(0xFF6750A4))
+            val primaryBarColor = if (vacationMode) ColorProvider(Color(0xFF9E9E9E))
+                else themeColors?.colorScheme?.primary?.let { ColorProvider(it) }
+                    ?: ColorProvider(Color(0xFF6750A4))
 
             // Counts always reflect all tasks; showCompleted only controls the list display
             val totalCount = overdueTasks.size + todayTasks.size + completedTasksAll.size
@@ -134,6 +138,7 @@ class OrdnaWidget : GlanceAppWidget() {
                     sorting = sorting,
                     listOrder = listOrder,
                     streak = streak,
+                    vacationMode = vacationMode,
                 )
             }
         }
@@ -169,6 +174,7 @@ private fun WidgetContent(
     sorting: WidgetSorting,
     listOrder: List<String>,
     streak: Int,
+    vacationMode: Boolean,
 ) {
     val rowPadding = when (density) {
         LayoutDensity.COMFORTABLE -> 5.dp
@@ -207,6 +213,13 @@ private fun WidgetContent(
                     Text(
                         text = ctx.getString(R.string.widget_done_count, completedCount, totalCount),
                         style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Medium, color = textColor),
+                    )
+                }
+                if (vacationMode) {
+                    Spacer(modifier = GlanceModifier.width(6.dp))
+                    Text(
+                        text = "☀",
+                        style = TextStyle(fontSize = 11.sp, color = subtextColor),
                     )
                 }
                 Spacer(modifier = GlanceModifier.defaultWeight())
