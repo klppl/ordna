@@ -4,6 +4,16 @@ A daily task app for Android that syncs with Google Tasks.
 
 [<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="60">](http://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/klppl/ordna/releases)
 
+## Screenshots
+
+<p align="center">
+  <img src="app/src/test/snapshots/images/io.github.klppl.ordna.screenshots_ScreenshotTest_todayScreen.png" alt="Today screen" width="270">
+  &nbsp;&nbsp;
+  <img src="app/src/test/snapshots/images/io.github.klppl.ordna.screenshots_ScreenshotTest_ordnaWidget.png" alt="Task list widget" width="200">
+  &nbsp;&nbsp;
+  <img src="app/src/test/snapshots/images/io.github.klppl.ordna.screenshots_ScreenshotTest_counterWidget.png" alt="Counter widget" width="150">
+</p>
+
 ## Why this exists
 
 Every todo app I tried wanted to be a project manager, a habit tracker, a second brain, or all three. I wanted to see today's tasks, check them off, and close the app.
