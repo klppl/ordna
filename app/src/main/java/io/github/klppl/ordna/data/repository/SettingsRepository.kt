@@ -377,6 +377,12 @@ class SettingsRepository @Inject constructor(
         fun streakFlow(context: Context): Flow<Int> =
             context.settingsDataStore.data.map { prefs -> effectiveStreak(prefs) }
 
+        /** Reactive Flow for widget — emits whenever vacation mode changes. */
+        fun vacationModeFlow(context: Context): Flow<Boolean> =
+            context.settingsDataStore.data.map { prefs ->
+                prefs[booleanPreferencesKey("vacation_mode")] ?: false
+            }
+
         /**
          * Returns 0 if the streak has lapsed (last recorded date is older than
          * yesterday and vacation mode is off). Otherwise returns the stored count.
