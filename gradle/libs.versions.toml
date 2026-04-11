@@ -19,6 +19,7 @@ googleHttpClientGson = "1.45.1"
 googleApiServicesTasks = "v1-rev20250302-2.0.0"
 datastorePreferences = "1.1.1"
 appcompat = "1.7.0"
+paparazzi = "1.3.5"
 profileinstaller = "1.4.1"
 
 [libraries]
@@ -82,3 +83,4 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
