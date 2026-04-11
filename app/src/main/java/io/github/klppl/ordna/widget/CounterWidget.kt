@@ -177,10 +177,6 @@ private fun CounterContent(
                             color = textColor,
                         ),
                     )
-                    Text(
-                        text = ctx.getString(R.string.counter_widget_left),
-                        style = TextStyle(fontSize = 12.sp, color = subtextColor),
-                    )
                 } else {
                     Text(
                         text = ctx.getString(R.string.counter_widget_done),
