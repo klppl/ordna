@@ -55,6 +55,7 @@ class CounterWidget : GlanceAppWidget() {
         val today = LocalDate.now()
         val settingsFlow = SettingsRepository.widgetSettingsFlow(context)
         val streakFlow = SettingsRepository.streakFlow(context)
+        val vacationFlow = SettingsRepository.vacationModeFlow(context)
 
         // Snapshot for instant first frame
         val initialOverdue = dao.getOverdueTasks(today).first()
@@ -62,6 +63,7 @@ class CounterWidget : GlanceAppWidget() {
         val initialCompleted = dao.getCompletedTasks().first()
         val initialSettings = settingsFlow.first()
         val initialStreak = streakFlow.first()
+        val initialVacation = vacationFlow.first()
 
         provideContent {
             // Reactive Flows keep widget in sync when composition is alive
@@ -70,6 +72,7 @@ class CounterWidget : GlanceAppWidget() {
             val completedTasks by dao.getCompletedTasks().collectAsState(initial = initialCompleted)
             val settings by settingsFlow.collectAsState(initial = initialSettings)
             val streak by streakFlow.collectAsState(initial = initialStreak)
+            val vacationMode by vacationFlow.collectAsState(initial = initialVacation)
 
             val activeCount = overdueTasks.size + todayTasks.size
             val completedCount = completedTasks.size
@@ -82,6 +85,7 @@ class CounterWidget : GlanceAppWidget() {
                     completedCount = completedCount,
                     settings = settings,
                     streak = streak,
+                    vacationMode = vacationMode,
                 )
             }
         }
@@ -99,6 +103,7 @@ private fun CounterContent(
     completedCount: Int,
     settings: WidgetSettings,
     streak: Int,
+    vacationMode: Boolean,
 ) {
     val ctx = LocalContext.current
     val appTheme = AppTheme.entries.find { it.name == settings.theme } ?: AppTheme.SYSTEM
@@ -121,14 +126,17 @@ private fun CounterContent(
     val textColor = if (isLight) ColorProvider(Color(0xFF1C1B1F)) else ColorProvider(Color(0xFFE6E1E5))
     val subtextColor = if (isLight) ColorProvider(Color(0xFF49454F)) else ColorProvider(Color(0xFFCAC4D0))
 
-    // Rail and progress bar share one accent. Theme primary if a theme is set,
-    // else fallback purple matching the rest of the app.
-    val accentColor = themeColors?.colorScheme?.primary?.let { ColorProvider(it) }
-        ?: ColorProvider(Color(0xFF6750A4))
+    // Rail and progress bar share one accent. Grey when on vacation,
+    // otherwise theme primary or fallback purple.
+    val vacationGrey = Color(0xFF9E9E9E)
+    val accentColor = if (vacationMode) ColorProvider(vacationGrey)
+        else themeColors?.colorScheme?.primary?.let { ColorProvider(it) }
+            ?: ColorProvider(Color(0xFF6750A4))
     // Opaque variant of the accent for the rail — must NOT respect the user's
     // opacity slider. The rail is the visual anchor; dissolving it with the
     // background defeats the whole point.
-    val railOpaqueColor = themeColors?.colorScheme?.primary ?: Color(0xFF6750A4)
+    val railOpaqueColor = if (vacationMode) vacationGrey
+        else themeColors?.colorScheme?.primary ?: Color(0xFF6750A4)
 
     val trackColor = if (isLight) ColorProvider(Color(0xFFE0E0E0)) else ColorProvider(Color(0xFF444444))
 
@@ -200,6 +208,14 @@ private fun CounterContent(
                         backgroundColor = trackColor,
                     )
                 }
+            }
+
+            if (vacationMode) {
+                Text(
+                    text = "☀",
+                    style = TextStyle(fontSize = 11.sp, color = subtextColor),
+                    modifier = GlanceModifier.padding(top = 6.dp, end = 6.dp),
+                )
             }
         }
     }
