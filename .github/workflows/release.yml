@@ -6,9 +6,6 @@ on:
       version_name:
         description: 'Version name (e.g. 1.0.2)'
         required: true
-      version_code:
-        description: 'Version code (integer, must be higher than previous)'
-        required: true
 
 jobs:
   build:
@@ -28,6 +25,13 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Derive version code
+        id: version
+        run: |
+          IFS='.' read -r major minor patch <<< "${{ inputs.version_name }}"
+          code=$(( major * 10000 + minor * 100 + patch ))
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
       - name: Decode keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ${{ github.workspace }}/release.keystore
 
@@ -41,7 +45,7 @@ jobs:
           EOF
 
       - name: Build release APK
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease -PVERSION_NAME=${{ inputs.version_name }} -PVERSION_CODE=${{ steps.version.outputs.code }}
 
       - name: Rename APK
         run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/ordna-v${{ inputs.version_name }}.apk

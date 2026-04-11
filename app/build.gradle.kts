@@ -23,8 +23,8 @@ android {
         applicationId = "io.github.klppl.ordna"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = (findProperty("VERSION_CODE") as String?)?.toIntOrNull() ?: 2
+        versionName = (findProperty("VERSION_NAME") as String?) ?: "1.0.1"
     }
 
     signingConfigs {
