@@ -7,7 +7,7 @@ A daily task app for Android that syncs with Google Tasks.
 ## Screenshots
 
 <p align="center">
-  <img src="app/src/test/snapshots/images/io.github.klppl.ordna.screenshots_ScreenshotTest_todayScreen.png" alt="Today screen" width="270">
+  <img src="app/src/test/snapshots/images/today_screen_framed.png" alt="Today screen" width="270">
   &nbsp;&nbsp;
   <img src="app/src/test/snapshots/images/io.github.klppl.ordna.screenshots_ScreenshotTest_ordnaWidget.png" alt="Task list widget" width="200">
   &nbsp;&nbsp;
