@@ -148,6 +148,12 @@ fun TodayScreenDemo(state: TodayUiState) {
 
             // Today section
             if (state.todayTasks.isNotEmpty()) {
+                item(key = "today_header") {
+                    DemoSectionHeader(
+                        title = "DUE TODAY",
+                        count = state.todayTasks.size,
+                    )
+                }
                 items(state.todayTasks, key = { "today_${it.id}" }) { task ->
                     DemoTaskRow(task = task)
                 }
@@ -217,26 +223,29 @@ private fun DemoTaskRow(
 private fun DemoSectionHeader(
     title: String,
     count: Int,
-    color: Color,
+    color: Color? = null,
 ) {
+    val headerColor = color ?: MaterialTheme.colorScheme.onSurface
+    val bgColor = color?.copy(alpha = 0.08f)
+        ?: MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(color.copy(alpha = 0.08f))
+            .background(bgColor)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = title.uppercase(),
             style = MaterialTheme.typography.titleSmall,
-            color = color,
+            color = headerColor,
             letterSpacing = 1.2.sp,
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = "$count",
             style = MaterialTheme.typography.titleSmall,
-            color = color.copy(alpha = 0.7f),
+            color = headerColor.copy(alpha = 0.7f),
         )
     }
 }

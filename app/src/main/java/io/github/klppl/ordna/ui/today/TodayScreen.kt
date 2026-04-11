@@ -291,11 +291,16 @@ fun TodayScreen(
 
                     // Due Today section
                     if (state.todayTasks.isNotEmpty()) {
-                        // Breathing room after overdue section
                         if (state.overdueTasks.isNotEmpty()) {
                             item(key = "today_spacer") {
                                 Spacer(modifier = Modifier.height(12.dp))
                             }
+                        }
+                        item(key = "today_header") {
+                            SectionHeader(
+                                title = stringResource(R.string.section_due_today),
+                                count = state.todayTasks.size,
+                            )
                         }
                         taskSection(
                             tasks = state.todayTasks,
