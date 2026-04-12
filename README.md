@@ -4,6 +4,8 @@ A daily task app for Android that syncs with Google Tasks.
 
 [<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="60">](http://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/klppl/ordna/releases)
 
+> On iOS? A friend is building a native port over at [mrboatsman/ordna-ios](https://github.com/mrboatsman/ordna-ios) — go give it some love.
+
 ## Screenshots
 
 <p align="center">
