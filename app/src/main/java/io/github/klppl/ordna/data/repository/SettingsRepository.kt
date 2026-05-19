@@ -48,6 +48,26 @@ data class ReminderSettings(
     val eveningMinute: Int = 0,
 )
 
+/** Pure state for streak math; stored as separate prefs but reasoned about together. */
+internal data class StreakState(val count: Int, val lastDate: String?)
+
+/**
+ * Pure logic for streak progression. Extracted so it's unit-testable
+ * without DataStore. Returns the new state given the current state and inputs.
+ */
+internal fun computeStreakAfterAllDone(
+    current: StreakState,
+    today: LocalDate,
+    vacationMode: Boolean,
+): StreakState {
+    if (vacationMode) return current
+    val todayStr = today.toString()
+    if (current.lastDate == todayStr) return current
+    val yesterdayStr = today.minusDays(1).toString()
+    val newCount = if (current.lastDate == yesterdayStr) current.count + 1 else 1
+    return StreakState(newCount, todayStr)
+}
+
 @Singleton
 class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -243,18 +263,18 @@ class SettingsRepository @Inject constructor(
 
     suspend fun recordAllDone() {
         context.settingsDataStore.edit { prefs ->
-            if (prefs[vacationModeKey] == true) return@edit // streak frozen
-
-            val today = LocalDate.now().toString()
-            val lastDate = prefs[streakLastDateKey]
-
-            if (lastDate == today) return@edit // already recorded today
-
-            val yesterday = LocalDate.now().minusDays(1).toString()
-            val currentStreak = prefs[streakCountKey] ?: 0
-
-            prefs[streakCountKey] = if (lastDate == yesterday) currentStreak + 1 else 1
-            prefs[streakLastDateKey] = today
+            val current = StreakState(
+                count = prefs[streakCountKey] ?: 0,
+                lastDate = prefs[streakLastDateKey],
+            )
+            val next = computeStreakAfterAllDone(
+                current = current,
+                today = LocalDate.now(),
+                vacationMode = prefs[vacationModeKey] == true,
+            )
+            if (next == current) return@edit
+            prefs[streakCountKey] = next.count
+            next.lastDate?.let { prefs[streakLastDateKey] = it }
         }
     }
 

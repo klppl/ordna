@@ -271,8 +271,9 @@ class TaskRepository @Inject constructor(
 
         /**
          * Core sync logic shared by both Hilt-injected sync() and standalone syncForWidget().
+         * `internal` so unit tests can call it directly.
          */
-        private suspend fun performSync(dao: TaskDao, api: GoogleTasksApi, email: String): SyncOutcome {
+        internal suspend fun performSync(dao: TaskDao, api: GoogleTasksApi, email: String): SyncOutcome {
             val today = LocalDate.now()
             val taskLists = api.fetchTaskLists(email)
             val allTasks = mutableListOf<TaskEntity>()

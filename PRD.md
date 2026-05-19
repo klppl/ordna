@@ -72,20 +72,21 @@ Items are ordered by priority within tiers. Tick the status box as we work throu
 
 ## P2 — Medium value
 
-### P2.1 `[ ]` Tests for performSync + streak math
+### P2.1 `[x]` Tests for performSync + streak math
 - **Problem.** No JVM tests. `performSync` pending-preservation logic (TaskRepository.kt:296-313) is the kind of code that quietly breaks.
 - **Change.** Add fakes for `GoogleTasksApi` + in-memory `TaskDao`. Cover: pending preservation, completed-today filter, streak increment, streak reset on overdue.
 - **Done when.** `./gradlew test` passes; tests run in CI (see P2.3).
 
-### P2.2 `[ ]` Refactor TodayUiState combine
+### P2.2 `[x]` Refactor TodayUiState combine
 - **Problem.** `TodayViewModel.kt:69-115` reaches into positional `Array<Any?>` with `@Suppress("UNCHECKED_CAST")`. Renumbering inputs breaks silently.
 - **Change.** Split into two derived StateFlows or wrap each sub-combine's output in a tiny named record. Behavior unchanged.
 - **Done when.** No `Array<Any?>` indexing remains; Paparazzi screenshots unchanged.
 
-### P2.3 `[ ]` ktlint + CI on PR
-- **Problem.** No lint; existing workflows are manual-dispatch only.
-- **Change.** Add `ktlint-gradle` and a `.github/workflows/ci.yml` running `assembleDebug` + `ktlintCheck` + unit tests on `pull_request`.
-- **Done when.** A new PR fails if lint or build fails.
+### P2.3 `[x]` CI on PR
+- **Problem.** Existing workflows are manual-dispatch only; merging untested code is easy.
+- **Change.** Added `.github/workflows/ci.yml` running `assembleDebug` + `test` on `pull_request` and pushes to `main`.
+- **Done when.** A new PR fails if build or tests fail.
+- **Follow-up:** ktlint was attempted but `ktlint-gradle` v12.1.1/v13.0.0 fails to parse plain Kotlin 2.1 files (likely tooling compat issue). Revisit when the plugin catches up — or switch to Android Lint (`./gradlew lint`) which is already bundled.
 
 ### P2.4 `[ ]` Per-list filter chips on TodayScreen
 - **Problem.** Many lists → hard to focus on one.

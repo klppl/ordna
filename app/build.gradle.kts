@@ -140,4 +140,9 @@ dependencies {
 
     // DataStore
     implementation(libs.datastore.preferences)
+
+    // Testing
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
 }

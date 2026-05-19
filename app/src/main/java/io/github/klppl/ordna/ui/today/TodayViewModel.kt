@@ -41,6 +41,50 @@ data class TodayUiState(
     val allCompleted: Boolean get() = totalCount > 0 && completedCount == totalCount
 }
 
+internal data class TaskInputs(
+    val overdue: List<TaskEntity>,
+    val today: List<TaskEntity>,
+    val completed: List<TaskEntity>,
+    val lastSync: Instant?,
+    val groupByList: Boolean,
+)
+
+internal data class PartialSettings(
+    val completionMethod: CompletionMethod,
+    val layoutDensity: LayoutDensity,
+    val isRefreshing: Boolean,
+    val error: String?,
+    val authExpired: Boolean,
+)
+
+internal data class SettingsInputs(
+    val completionMethod: CompletionMethod,
+    val layoutDensity: LayoutDensity,
+    val isRefreshing: Boolean,
+    val error: String?,
+    val authExpired: Boolean,
+    val streak: Int,
+    val listOrder: List<String>,
+)
+
+internal fun buildUiState(tasks: TaskInputs, settings: SettingsInputs): TodayUiState {
+    val comparator = TaskEntity.flatComparator(settings.listOrder)
+    return TodayUiState(
+        overdueTasks = if (tasks.groupByList) tasks.overdue else tasks.overdue.sortedWith(comparator),
+        todayTasks = if (tasks.groupByList) tasks.today else tasks.today.sortedWith(comparator),
+        completedTasks = tasks.completed,
+        lastSync = tasks.lastSync,
+        groupByList = tasks.groupByList,
+        completionMethod = settings.completionMethod,
+        layoutDensity = settings.layoutDensity,
+        isRefreshing = settings.isRefreshing,
+        isLoading = false,
+        error = settings.error,
+        authExpired = settings.authExpired,
+        streak = settings.streak,
+    )
+}
+
 @HiltViewModel
 class TodayViewModel @Inject constructor(
     application: Application,
@@ -68,53 +112,48 @@ class TodayViewModel @Inject constructor(
     val createListTitle: StateFlow<String?> = settingsRepository.createListTitle
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val uiState: StateFlow<TodayUiState> = combine(
+    private val taskFlow: kotlinx.coroutines.flow.Flow<TaskInputs> = combine(
+        repository.getOverdueTasks(),
+        repository.getTodayTasks(),
+        repository.getCompletedTasks(),
+        repository.lastSyncTime,
+        settingsRepository.groupByList,
+    ) { overdue, today, completed, lastSync, groupByList ->
+        TaskInputs(overdue, today, completed, lastSync, groupByList)
+    }
+
+    // Settings has 7 inputs — combine's max typed overload is 5,
+    // so split into two stages and merge.
+    private val settingsFlow: kotlinx.coroutines.flow.Flow<SettingsInputs> = combine(
         combine(
-            repository.getOverdueTasks(),
-            repository.getTodayTasks(),
-            repository.getCompletedTasks(),
-            repository.lastSyncTime,
-            settingsRepository.groupByList,
-        ) { overdue, today, completed, lastSync, groupByList ->
-            arrayOf(overdue, today, completed, lastSync, groupByList)
+            settingsRepository.completionMethod,
+            settingsRepository.appLayoutDensity,
+            _isRefreshing,
+            _error,
+            _authExpired,
+        ) { method, density, refreshing, error, authExpired ->
+            PartialSettings(method, density, refreshing, error, authExpired)
         },
-        combine(
-            listOf<kotlinx.coroutines.flow.Flow<Any?>>(
-                settingsRepository.completionMethod,
-                settingsRepository.appLayoutDensity,
-                _isRefreshing,
-                _error,
-                _authExpired,
-                settingsRepository.streak,
-                settingsRepository.listOrder,
-            ),
-        ) { values -> values },
-    ) { first, second ->
-        @Suppress("UNCHECKED_CAST")
-        val groupByList = first[4] as Boolean
-        val overdue = first[0] as List<TaskEntity>
-        val today = first[1] as List<TaskEntity>
-        val listOrder = second[6] as List<String>
-        val comparator = TaskEntity.flatComparator(listOrder)
-        TodayUiState(
-            overdueTasks = if (groupByList) overdue else overdue.sortedWith(comparator),
-            todayTasks = if (groupByList) today else today.sortedWith(comparator),
-            completedTasks = first[2] as List<TaskEntity>,
-            lastSync = first[3] as Instant?,
-            groupByList = groupByList,
-            completionMethod = second[0] as CompletionMethod,
-            layoutDensity = second[1] as LayoutDensity,
-            isRefreshing = second[2] as Boolean,
-            isLoading = false,
-            error = second[3] as String?,
-            authExpired = second[4] as Boolean,
-            streak = second[5] as Int,
+        settingsRepository.streak,
+        settingsRepository.listOrder,
+    ) { partial, streak, listOrder ->
+        SettingsInputs(
+            completionMethod = partial.completionMethod,
+            layoutDensity = partial.layoutDensity,
+            isRefreshing = partial.isRefreshing,
+            error = partial.error,
+            authExpired = partial.authExpired,
+            streak = streak,
+            listOrder = listOrder,
         )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = TodayUiState(),
-    )
+    }
+
+    val uiState: StateFlow<TodayUiState> = combine(taskFlow, settingsFlow, ::buildUiState)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = TodayUiState(),
+        )
 
     init {
         refresh()
