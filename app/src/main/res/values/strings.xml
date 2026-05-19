@@ -37,6 +37,10 @@
     <string name="error_partial_sync">Couldn\'t sync: %1$s</string>
     <string name="error_task_update_failed">Failed to update task</string>
     <string name="error_task_delete_failed">Failed to delete task</string>
+    <string name="snackbar_undo">Undo</string>
+    <string name="snackbar_completed">Completed \"%1$s\"</string>
+    <string name="snackbar_deleted">Deleted \"%1$s\"</string>
+    <string name="reminder_action_complete">Complete first task</string>
     <string name="task_detail_notes_hint">Add a note</string>
     <string name="task_detail_due">Due %1$s</string>
     <string name="task_detail_delete">Delete task</string>

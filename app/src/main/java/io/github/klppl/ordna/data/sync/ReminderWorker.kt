@@ -85,12 +85,29 @@ class ReminderWorker @AssistedInject constructor(
             inboxStyle.setSummaryText("+${taskCount - 5} more")
         }
 
+        val completeIntent = Intent(appContext, ReminderActionReceiver::class.java).apply {
+            action = ReminderActionReceiver.ACTION_COMPLETE_TOP_TASK
+            putExtra(ReminderActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+        }
+        val completePendingIntent = PendingIntent.getBroadcast(
+            appContext,
+            notificationId,
+            completeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val completeAction = NotificationCompat.Action.Builder(
+            R.drawable.ic_check_24,
+            appContext.getString(R.string.reminder_action_complete),
+            completePendingIntent,
+        ).build()
+
         val notification = NotificationCompat.Builder(appContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(inboxStyle)
             .setContentIntent(pendingIntent)
+            .addAction(completeAction)
             .setAutoCancel(true)
             .build()
 

@@ -32,13 +32,14 @@ class CreateTaskWorker @AssistedInject constructor(
         val listId = inputData.getString("list_id") ?: return Result.failure()
         val listTitle = inputData.getString("list_title") ?: return Result.failure()
         val dueDateStr = inputData.getString("due_date") ?: return Result.failure()
+        val notes = inputData.getString("notes")
         val email = repository.getAccountEmail() ?: return Result.failure()
 
         val dao = TaskDatabase.getInstance(applicationContext).taskDao()
         val dueDate = LocalDate.parse(dueDateStr)
 
         return try {
-            val created = api.createTask(email, listId, title, dueDate)
+            val created = api.createTask(email, listId, title, dueDate, notes)
             val listColor = GoogleTasksApi.colorForListId(listId)
             // Swap temp entity for real server entity
             dao.deleteById(tempId)

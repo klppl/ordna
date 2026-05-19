@@ -81,6 +81,10 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".data.sync.ReminderActionReceiver"
+            android:exported="false" />
+
     </application>
 
 </manifest>

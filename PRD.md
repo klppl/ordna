@@ -43,27 +43,27 @@ Items are ordered by priority within tiers. Tick the status box as we work throu
 
 ## P1 — High value, low cost
 
-### P1.1 `[ ]` Undo for completion and deletion
+### P1.1 `[x]` Undo for completion and deletion
 - **Problem.** Completions have no undo; deletions require an AlertDialog. Both are friction.
 - **Change.** After `toggleTask`/`deleteTask`, show a snackbar with Undo (4s). Undo calls the inverse op. Remove the delete confirmation dialog once Undo works.
 - **Done when.** Swipe-to-complete and detail-sheet delete both undoable; AlertDialog gone.
 
-### P1.2 `[ ]` Sync after share-to-app
+### P1.2 `[x]` Sync after share-to-app
 - **Problem.** `ShareActivity` creates remotely but the task doesn't appear locally until WorkManager fires.
 - **Change.** Insert an optimistic local entity (mirror `TaskRepository.createTask`) before calling `finish()`. Reuse the temp-id + reconcile pattern.
 - **Done when.** Sharing text into Ordna and opening the app shows the task immediately.
 
-### P1.3 `[ ]` Notification action: complete top task
+### P1.3 `[x]` Notification action: complete top task
 - **Problem.** `ReminderWorker.kt:88-95` only opens the app.
 - **Change.** Add a `NotificationCompat.Action` "Complete top task". Reuses widget-toggle plumbing (`WidgetToggleWorker` is the template).
 - **Done when.** Notification shows the action; tapping completes the first task and re-posts the reminder.
 
-### P1.4 `[ ]` Due date in CreateTaskSheet
+### P1.4 `[x]` Due date in CreateTaskSheet
 - **Problem.** `TaskRepository.createTask()` hardcodes `due = today`. Capturing a task for tomorrow forces a postpone afterward.
 - **Change.** Add a "Today / Tomorrow / Pick…" affordance to `CreateTaskSheet`, reusing `PostponeDialog` presets. Today stays default.
 - **Done when.** New tasks can be created for any date.
 
-### P1.5 `[ ]` Invalidate API cache + reset settings on sign-out
+### P1.5 `[x]` Invalidate API cache + reset settings on sign-out
 - **Problem.** `TaskRepository.clearAccount()` doesn't touch `GoogleTasksApi.cachedService/cachedEmail`. `ordna_settings` (streak, share list) also survives.
 - **Change.** Add `GoogleTasksApi.invalidate()` and call from `clearAccount()`. Reset streak + share-list keys; preserve theme/language/reminder times.
 - **Done when.** Signing out + back in with a different account doesn't reuse the old service or show the old streak.

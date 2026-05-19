@@ -65,8 +65,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -96,6 +98,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextDecoration
@@ -119,6 +122,11 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import kotlin.math.roundToInt
 
+private data class UndoableAction(
+    val message: String,
+    val undo: () -> Unit,
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayScreen(
@@ -129,12 +137,15 @@ fun TodayScreen(
     val state by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val undoLabel = stringResource(R.string.snackbar_undo)
     var overdueExpanded by rememberSaveable { mutableStateOf(true) }
 
     // Postpone dialog state
     var postponeTask by remember { mutableStateOf<TaskEntity?>(null) }
     var detailTask by remember { mutableStateOf<TaskEntity?>(null) }
     var showCreateSheet by remember { mutableStateOf(false) }
+    var pendingUndo by remember { mutableStateOf<UndoableAction?>(null) }
 
     LaunchedEffect(state.authExpired) {
         if (state.authExpired) onAuthExpired()
@@ -144,6 +155,31 @@ fun TodayScreen(
         state.error?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.clearError()
+        }
+    }
+
+    LaunchedEffect(pendingUndo) {
+        pendingUndo?.let { action ->
+            val result = snackbarHostState.showSnackbar(
+                message = action.message,
+                actionLabel = undoLabel,
+                duration = SnackbarDuration.Short,
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                action.undo()
+            }
+            pendingUndo = null
+        }
+    }
+
+    val toggleWithUndo: (TaskEntity) -> Unit = { task ->
+        val wasNeedsAction = task.status == "needsAction"
+        viewModel.toggleTask(task)
+        if (wasNeedsAction) {
+            pendingUndo = UndoableAction(
+                message = context.getString(R.string.snackbar_completed, task.title),
+                undo = { viewModel.toggleTask(task.copy(status = "completed")) },
+            )
         }
     }
 
@@ -282,7 +318,7 @@ fun TodayScreen(
                                 completionMethod = state.completionMethod,
                                 layoutDensity = state.layoutDensity,
                                 isOverdue = true,
-                                onToggle = { viewModel.toggleTask(it) },
+                                onToggle = { toggleWithUndo(it) },
                                 onPostpone = { postponeTask = it },
                                 onTap = { detailTask = it },
                             )
@@ -309,7 +345,7 @@ fun TodayScreen(
                             grouped = groupedToday,
                             completionMethod = state.completionMethod,
                             layoutDensity = state.layoutDensity,
-                            onToggle = { viewModel.toggleTask(it) },
+                            onToggle = { toggleWithUndo(it) },
                             onPostpone = { postponeTask = it },
                             onTap = { detailTask = it },
                         )
@@ -335,7 +371,7 @@ fun TodayScreen(
                             completionMethod = state.completionMethod,
                             layoutDensity = state.layoutDensity,
                             isCompleted = true,
-                            onToggle = { viewModel.toggleTask(it) },
+                            onToggle = { toggleWithUndo(it) },
                             onTap = { detailTask = it },
                         )
                     }
@@ -400,6 +436,18 @@ fun TodayScreen(
             onDelete = {
                 viewModel.deleteTask(task)
                 detailTask = null
+                pendingUndo = UndoableAction(
+                    message = context.getString(R.string.snackbar_deleted, task.title),
+                    undo = {
+                        viewModel.createTask(
+                            title = task.title,
+                            listId = task.listId,
+                            listTitle = task.listTitle,
+                            due = task.due ?: LocalDate.now(),
+                            notes = task.notes,
+                        )
+                    },
+                )
             },
         )
     }
@@ -414,8 +462,8 @@ fun TodayScreen(
             defaultListId = defaultListId,
             defaultListTitle = defaultListTitle,
             onDismiss = { showCreateSheet = false },
-            onCreate = { title, listId, listTitle ->
-                viewModel.createTask(title, listId, listTitle)
+            onCreate = { title, listId, listTitle, due ->
+                viewModel.createTask(title, listId, listTitle, due)
                 showCreateSheet = false
             },
         )
@@ -974,30 +1022,7 @@ private fun TaskDetailSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var titleText by remember(task.id) { mutableStateOf(task.title) }
     var notesText by remember(task.id) { mutableStateOf(task.notes ?: "") }
-    var showDeleteConfirm by remember { mutableStateOf(false) }
     val dayFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-
-    if (showDeleteConfirm) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirm = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDeleteConfirm = false
-                    onDelete()
-                }) {
-                    Text(stringResource(R.string.task_detail_delete))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
-            text = {
-                Text(stringResource(R.string.task_detail_delete_confirm, task.title))
-            },
-        )
-    }
 
     ModalBottomSheet(
         onDismissRequest = {
@@ -1043,7 +1068,7 @@ private fun TaskDetailSheet(
                     )
                 }
                 Spacer(Modifier.weight(1f))
-                IconButton(onClick = { showDeleteConfirm = true }) {
+                IconButton(onClick = { onDelete() }) {
                     Icon(
                         imageVector = Icons.Outlined.Delete,
                         contentDescription = stringResource(R.string.task_detail_delete),
@@ -1248,11 +1273,16 @@ private fun CreateTaskSheet(
     defaultListId: String?,
     defaultListTitle: String?,
     onDismiss: () -> Unit,
-    onCreate: (title: String, listId: String, listTitle: String) -> Unit,
+    onCreate: (title: String, listId: String, listTitle: String, due: LocalDate) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var title by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
+
+    val today = remember { LocalDate.now() }
+    val tomorrow = remember { today.plusDays(1) }
+    var selectedDue by remember { mutableStateOf(today) }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     val initialList = if (defaultListId != null) {
         availableLists.find { it.id == defaultListId }
@@ -1268,10 +1298,39 @@ private fun CreateTaskSheet(
     fun submit() {
         val list = selectedList ?: return
         if (title.isBlank()) return
-        onCreate(title.trim(), list.id, list.title)
+        onCreate(title.trim(), list.id, list.title, selectedDue)
     }
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDue.atStartOfDay(java.time.ZoneOffset.UTC)
+                .toInstant().toEpochMilli(),
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        selectedDue = java.time.Instant.ofEpochMilli(millis)
+                            .atZone(java.time.ZoneOffset.UTC)
+                            .toLocalDate()
+                    }
+                    showDatePicker = false
+                }) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -1311,6 +1370,34 @@ private fun CreateTaskSheet(
                         )
                     }
                 }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            val customDateLabel = selectedDue.format(DateTimeFormatter.ofPattern("EEE, MMM d"))
+            val isCustomDate = selectedDue != today && selectedDue != tomorrow
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FilterChip(
+                    selected = selectedDue == today,
+                    onClick = { selectedDue = today },
+                    label = { Text(stringResource(R.string.postpone_today)) },
+                )
+                FilterChip(
+                    selected = selectedDue == tomorrow,
+                    onClick = { selectedDue = tomorrow },
+                    label = { Text(stringResource(R.string.postpone_tomorrow)) },
+                )
+                FilterChip(
+                    selected = isCustomDate,
+                    onClick = { showDatePicker = true },
+                    label = {
+                        Text(if (isCustomDate) customDateLabel else stringResource(R.string.postpone_pick_date))
+                    },
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))

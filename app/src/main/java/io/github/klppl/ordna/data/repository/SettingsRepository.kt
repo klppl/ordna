@@ -224,6 +224,23 @@ class SettingsRepository @Inject constructor(
         }
     }
 
+    /**
+     * Clears account-tied state on sign-out. Preserves UI preferences
+     * (theme, language, density, reminder times) since those are not
+     * account-specific.
+     */
+    suspend fun clearForSignOut() {
+        context.settingsDataStore.edit { prefs ->
+            prefs.remove(streakCountKey)
+            prefs.remove(streakLastDateKey)
+            prefs.remove(shareListIdKey)
+            prefs.remove(shareListTitleKey)
+            prefs.remove(createListIdKey)
+            prefs.remove(createListTitleKey)
+            prefs.remove(vacationModeKey)
+        }
+    }
+
     suspend fun recordAllDone() {
         context.settingsDataStore.edit { prefs ->
             if (prefs[vacationModeKey] == true) return@edit // streak frozen

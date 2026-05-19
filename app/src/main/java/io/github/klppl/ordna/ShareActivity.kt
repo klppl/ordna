@@ -76,7 +76,9 @@ class ShareActivity : ComponentActivity() {
                     }
                 }
 
-                api.createTask(email, listId, title)
+                // Route through the repository so the task appears immediately
+                // in the local DB (optimistic insert with due=today).
+                taskRepository.createTask(title, listId, listTitle ?: "Tasks")
                 Toast.makeText(
                     this@ShareActivity,
                     getString(R.string.share_added_to, listTitle),

@@ -43,6 +43,13 @@ class GoogleTasksApi @Inject constructor(
         }
     }
 
+    /** Drops the cached service and email — call on sign-out or account switch. */
+    @Synchronized
+    fun invalidate() {
+        cachedEmail = null
+        cachedService = null
+    }
+
     suspend fun fetchTaskLists(accountEmail: String): List<TaskList> = withContext(Dispatchers.IO) {
         getService(accountEmail).tasklists().list()
             .setMaxResults(100)

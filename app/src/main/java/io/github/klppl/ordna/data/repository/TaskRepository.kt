@@ -45,6 +45,7 @@ class TaskRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val taskDao: TaskDao,
     private val api: GoogleTasksApi,
+    private val settingsRepository: SettingsRepository,
 ) {
     private val accountEmailKey = stringPreferencesKey("account_email")
     private val lastSyncKey = longPreferencesKey("last_sync")
@@ -68,6 +69,8 @@ class TaskRepository @Inject constructor(
     suspend fun clearAccount() {
         context.dataStore.edit { it.clear() }
         taskDao.deleteAll()
+        api.invalidate()
+        settingsRepository.clearForSignOut()
     }
 
     fun getOverdueTasks(): Flow<List<TaskEntity>> =
@@ -138,6 +141,20 @@ class TaskRepository @Inject constructor(
         }
     }
 
+    /**
+     * Toggle status with the API call deferred to WorkManager. Safe for
+     * BroadcastReceiver / Glance action contexts where we can't block on the API.
+     */
+    suspend fun toggleTaskDeferred(task: TaskEntity) {
+        val isCompleting = task.status == "needsAction"
+        val newStatus = if (isCompleting) "completed" else "needsAction"
+        val now = if (isCompleting) Instant.now() else null
+
+        taskDao.updateTaskStatus(task.id, newStatus, now)
+        enqueueMutation(task.id, task.listId, if (isCompleting) "complete" else "uncomplete")
+        updateAllWidgets(context)
+    }
+
     suspend fun updateTaskTitle(task: TaskEntity, title: String): Result<Unit> = runCatching {
         val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
 
@@ -176,22 +193,28 @@ class TaskRepository @Inject constructor(
         }
     }
 
-    suspend fun createTask(title: String, listId: String, listTitle: String): Result<Unit> = runCatching {
+    suspend fun createTask(
+        title: String,
+        listId: String,
+        listTitle: String,
+        due: LocalDate = LocalDate.now(),
+        notes: String? = null,
+    ): Result<Unit> = runCatching {
         val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
-        val today = LocalDate.now()
         val tempId = "temp-${java.util.UUID.randomUUID()}"
         val listColor = GoogleTasksApi.colorForListId(listId)
 
         val tempEntity = TaskEntity(
             id = tempId,
             title = title,
-            due = today,
-            dueDateTime = "${today}T00:00:00.000Z",
+            due = due,
+            dueDateTime = "${due}T00:00:00.000Z",
             status = "needsAction",
             completedAt = null,
             listId = listId,
             listTitle = listTitle,
             listColor = listColor,
+            notes = notes,
             position = "",
             updated = Instant.now(),
         )
@@ -199,7 +222,7 @@ class TaskRepository @Inject constructor(
         updateAllWidgets(context)
 
         try {
-            val created = api.createTask(email, listId, title, today)
+            val created = api.createTask(email, listId, title, due, notes)
             taskDao.deleteById(tempId)
             taskDao.upsertAll(listOf(
                 tempEntity.copy(
@@ -218,7 +241,8 @@ class TaskRepository @Inject constructor(
                     "title" to title,
                     "list_id" to listId,
                     "list_title" to listTitle,
-                    "due_date" to today.toString(),
+                    "due_date" to due.toString(),
+                    "notes" to notes,
                 ))
                 .setConstraints(networkConstraints)
                 .setBackoffCriteria(androidx.work.BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)

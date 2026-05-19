@@ -205,9 +205,15 @@ class TodayViewModel @Inject constructor(
         }
     }
 
-    fun createTask(title: String, listId: String, listTitle: String) {
+    fun createTask(
+        title: String,
+        listId: String,
+        listTitle: String,
+        due: java.time.LocalDate = java.time.LocalDate.now(),
+        notes: String? = null,
+    ) {
         viewModelScope.launch {
-            repository.createTask(title, listId, listTitle).onFailure { e ->
+            repository.createTask(title, listId, listTitle, due, notes).onFailure { e ->
                 _error.value = e.localizedMessage ?: getString(R.string.create_task_error)
             }
         }
