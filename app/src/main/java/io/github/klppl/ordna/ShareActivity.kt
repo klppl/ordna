@@ -4,12 +4,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.lifecycle.lifecycleScope
 import io.github.klppl.ordna.data.remote.GoogleTasksApi
 import io.github.klppl.ordna.data.repository.SettingsRepository
 import io.github.klppl.ordna.data.repository.TaskRepository
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -50,7 +49,7 @@ class ShareActivity : ComponentActivity() {
             }
         }
 
-        CoroutineScope(Dispatchers.Main).launch {
+        lifecycleScope.launch {
             try {
                 val email = taskRepository.getAccountEmail()
                 if (email == null) {

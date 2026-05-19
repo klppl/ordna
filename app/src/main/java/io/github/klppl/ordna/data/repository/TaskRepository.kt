@@ -35,6 +35,11 @@ private val Context.dataStore by preferencesDataStore(name = "ordna_prefs")
 
 data class TaskListInfo(val id: String, val title: String, val color: Int)
 
+data class SyncOutcome(
+    val taskLists: List<TaskListInfo>,
+    val failedListTitles: List<String>,
+)
+
 @Singleton
 class TaskRepository @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -74,12 +79,13 @@ class TaskRepository @Inject constructor(
     fun getCompletedTasks(): Flow<List<TaskEntity>> =
         taskDao.getCompletedTasks()
 
-    suspend fun sync(): Result<Unit> = runCatching {
+    suspend fun sync(): Result<List<String>> = runCatching {
         val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
-        val taskLists = performSync(taskDao, api, email)
-        _cachedTaskLists.value = taskLists
+        val outcome = performSync(taskDao, api, email)
+        _cachedTaskLists.value = outcome.taskLists
         context.dataStore.edit { it[lastSyncKey] = Instant.now().toEpochMilli() }
         updateAllWidgets(context)
+        outcome.failedListTitles
     }
 
     private val networkConstraints = Constraints.Builder()
@@ -242,10 +248,11 @@ class TaskRepository @Inject constructor(
         /**
          * Core sync logic shared by both Hilt-injected sync() and standalone syncForWidget().
          */
-        private suspend fun performSync(dao: TaskDao, api: GoogleTasksApi, email: String): List<TaskListInfo> {
+        private suspend fun performSync(dao: TaskDao, api: GoogleTasksApi, email: String): SyncOutcome {
             val today = LocalDate.now()
             val taskLists = api.fetchTaskLists(email)
             val allTasks = mutableListOf<TaskEntity>()
+            val failedListTitles = mutableListOf<String>()
 
             for (list in taskLists) {
                 val listId = list.id ?: continue
@@ -255,6 +262,7 @@ class TaskRepository @Inject constructor(
                 val tasks = try {
                     api.fetchTasks(email, listId)
                 } catch (_: Exception) {
+                    failedListTitles.add(listTitle)
                     continue
                 }
 
@@ -313,10 +321,11 @@ class TaskRepository @Inject constructor(
             }
 
             dao.syncReplace(allTasks)
-            return taskLists.mapNotNull { list ->
+            val infos = taskLists.mapNotNull { list ->
                 val id = list.id ?: return@mapNotNull null
                 TaskListInfo(id, list.title ?: "Untitled", GoogleTasksApi.colorForListId(id))
             }
+            return SyncOutcome(infos, failedListTitles)
         }
     }
 }

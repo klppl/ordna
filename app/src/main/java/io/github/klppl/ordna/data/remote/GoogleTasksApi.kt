@@ -3,6 +3,8 @@ package io.github.klppl.ordna.data.remote
 import android.accounts.Account
 import android.content.Context
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
+import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.tasks.Tasks
@@ -111,10 +113,9 @@ class GoogleTasksApi @Inject constructor(
         taskId: String,
         notes: String?,
     ) = withContext(Dispatchers.IO) {
-        val service = getService(accountEmail)
-        val task = service.tasks().get(listId, taskId).execute()
-        task.notes = notes
-        service.tasks().update(listId, taskId, task).execute()
+        // PATCH semantics: omitted fields are unchanged. Empty string clears.
+        val patch = Task().setNotes(notes ?: "")
+        getService(accountEmail).tasks().patch(listId, taskId, patch).execute()
     }
 
     suspend fun updateTaskTitle(
@@ -133,11 +134,9 @@ class GoogleTasksApi @Inject constructor(
         taskId: String,
         newDue: LocalDate,
     ) = withContext(Dispatchers.IO) {
-        val service = getService(accountEmail)
-        val task = service.tasks().get(listId, taskId).execute()
         // Google Tasks expects due as RFC 3339 date-time at midnight UTC
-        task.due = "${newDue}T00:00:00.000Z"
-        service.tasks().update(listId, taskId, task).execute()
+        val patch = Task().setDue("${newDue}T00:00:00.000Z")
+        getService(accountEmail).tasks().patch(listId, taskId, patch).execute()
     }
 
     suspend fun deleteTask(
@@ -185,6 +184,20 @@ class GoogleTasksApi @Inject constructor(
             } catch (_: Exception) {
                 null
             }
+        }
+
+        /**
+         * True if the throwable (or any wrapped cause) indicates the user needs to
+         * re-authenticate: revoked consent, expired credential, or HTTP 401 from the API.
+         */
+        fun isAuthError(e: Throwable): Boolean {
+            var current: Throwable? = e
+            while (current != null) {
+                if (current is UserRecoverableAuthIOException) return true
+                if (current is GoogleJsonResponseException && current.statusCode == 401) return true
+                current = current.cause
+            }
+            return false
         }
     }
 }

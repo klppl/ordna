@@ -34,6 +34,7 @@
     <string name="all_done_subtitle">You\'ve completed everything for today</string>
     <string name="streak_days">%1$d-day streak</string>
     <string name="error_sync_failed">Sync failed</string>
+    <string name="error_partial_sync">Couldn\'t sync: %1$s</string>
     <string name="error_task_update_failed">Failed to update task</string>
     <string name="error_task_delete_failed">Failed to delete task</string>
     <string name="task_detail_notes_hint">Add a note</string>

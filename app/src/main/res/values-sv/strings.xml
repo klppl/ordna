@@ -31,6 +31,7 @@
     <string name="all_done_subtitle">Du har slutfört allt för idag</string>
     <string name="streak_days">%1$d dagar i rad</string>
     <string name="error_sync_failed">Synkronisering misslyckades</string>
+    <string name="error_partial_sync">Kunde inte synka: %1$s</string>
     <string name="error_task_update_failed">Kunde inte uppdatera uppgift</string>
     <string name="error_task_delete_failed">Kunde inte ta bort uppgift</string>
     <string name="task_detail_notes_hint">Lägg till en anteckning</string>

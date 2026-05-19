@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.klppl.ordna.R
 import io.github.klppl.ordna.data.local.TaskEntity
+import io.github.klppl.ordna.data.remote.GoogleTasksApi
 import io.github.klppl.ordna.data.repository.CompletionMethod
 import io.github.klppl.ordna.data.repository.LayoutDensity
 import io.github.klppl.ordna.data.repository.SettingsRepository
@@ -47,7 +48,8 @@ class TodayViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
 ) : AndroidViewModel(application) {
 
-    private fun getString(resId: Int): String = getApplication<Application>().getString(resId)
+    private fun getString(resId: Int, vararg args: Any): String =
+        getApplication<Application>().getString(resId, *args)
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
@@ -144,8 +146,16 @@ class TodayViewModel @Inject constructor(
             _isRefreshing.value = true
             _error.value = null
             val result = repository.sync()
+            result.onSuccess { failedTitles ->
+                if (failedTitles.isNotEmpty()) {
+                    _error.value = getString(
+                        R.string.error_partial_sync,
+                        failedTitles.joinToString(", "),
+                    )
+                }
+            }
             result.onFailure { e ->
-                if (isAuthError(e)) {
+                if (GoogleTasksApi.isAuthError(e)) {
                     _authExpired.value = true
                 } else {
                     _error.value = e.localizedMessage ?: getString(R.string.error_sync_failed)
@@ -205,10 +215,5 @@ class TodayViewModel @Inject constructor(
 
     fun clearError() {
         _error.value = null
-    }
-
-    private fun isAuthError(e: Throwable): Boolean {
-        val message = e.message?.lowercase() ?: return false
-        return "401" in message || "auth" in message || "unauthorized" in message
     }
 }
