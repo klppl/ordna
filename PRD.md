@@ -108,26 +108,26 @@ Items are ordered by priority within tiers. Tick the status box as we work throu
 
 ## P3 — Polish
 
-### P3.1 `[ ]` TalkBack: section headers as headings
+### P3.1 `[x]` TalkBack: section headers as headings
 - `Modifier.semantics { heading() }` on `SectionHeader` (TodayScreen.kt:839-885).
 - Custom accessibility action for swipe-to-complete (TalkBack users can't swipe).
 
-### P3.2 `[ ]` Empty-state polish
+### P3.2 `[x]` Empty-state polish
 - Replace plain "no tasks due today" text (TodayScreen.kt:240-244) with a small celebration block — streak preview, time-of-day greeting, quick add.
 
-### P3.3 `[ ]` Streak history sheet
+### P3.3 `[x]` Streak history sheet
 - Persist last 30 day completions; tapping the streak badge opens a mini-calendar bottom sheet.
 
-### P3.4 `[ ]` CreateTaskSheet chip auto-scroll
+### P3.4 `[x]` CreateTaskSheet chip auto-scroll
 - Scroll selected chip into view when the sheet opens (TodayScreen.kt:1298-1313).
 
-### P3.5 `[ ]` flatComparator: new lists at top, not bottom
+### P3.5 `[x]` flatComparator: new lists at top, not bottom
 - Replace `Int.MAX_VALUE` fallback with `-1` so unknown lists surface instead of sinking.
 
-### P3.6 `[ ]` Magic strings → TaskStatus enum
+### P3.6 `[x]` Magic strings → TaskStatus enum
 - Replace `"needsAction"`/`"completed"` literals across DAO/API/widget with an enum + Room converter.
 
-### P3.7 `[ ]` Verify MainActivity handles SYNC_ON_LAUNCH in onNewIntent
+### P3.7 `[x]` Verify MainActivity handles SYNC_ON_LAUNCH in onNewIntent
 - Confirm intent extras from reminders/widget are consumed in both `onCreate` and `onNewIntent`.
 
 ---

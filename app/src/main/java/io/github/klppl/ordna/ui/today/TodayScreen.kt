@@ -28,7 +28,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
@@ -101,6 +103,10 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -145,6 +151,7 @@ fun TodayScreen(
     var postponeTask by remember { mutableStateOf<TaskEntity?>(null) }
     var detailTask by remember { mutableStateOf<TaskEntity?>(null) }
     var showCreateSheet by remember { mutableStateOf(false) }
+    var showStreakSheet by remember { mutableStateOf(false) }
     var pendingUndo by remember { mutableStateOf<UndoableAction?>(null) }
 
     LaunchedEffect(state.authExpired) {
@@ -173,12 +180,12 @@ fun TodayScreen(
     }
 
     val toggleWithUndo: (TaskEntity) -> Unit = { task ->
-        val wasNeedsAction = task.status == "needsAction"
+        val wasNeedsAction = task.status == io.github.klppl.ordna.data.local.TaskStatus.NEEDS_ACTION
         viewModel.toggleTask(task)
         if (wasNeedsAction) {
             pendingUndo = UndoableAction(
                 message = context.getString(R.string.snackbar_completed, task.title),
-                undo = { viewModel.toggleTask(task.copy(status = "completed")) },
+                undo = { viewModel.toggleTask(task.copy(status = io.github.klppl.ordna.data.local.TaskStatus.COMPLETED)) },
             )
         }
     }
@@ -236,7 +243,9 @@ fun TodayScreen(
                             text = "\uD83D\uDD25${state.streak}",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(end = 4.dp),
+                            modifier = Modifier
+                                .clickable { showStreakSheet = true }
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
                         )
                     }
                     IconButton(onClick = onNavigateToSettings) {
@@ -279,16 +288,7 @@ fun TodayScreen(
                     CircularProgressIndicator()
                 }
             } else if (state.totalCount == 0 && !isRefreshing) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = stringResource(R.string.no_tasks_due_today),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                EmptyDayState()
             } else {
                 // Pre-compute grouping so it's not recalculated on every recomposition
                 val groupedOverdue = remember(state.overdueTasks) { state.overdueTasks.groupBy { it.listTitle } }
@@ -479,6 +479,115 @@ fun TodayScreen(
             },
         )
     }
+
+    if (showStreakSheet) {
+        val history by viewModel.streakHistory.collectAsState()
+        StreakHistorySheet(
+            streak = state.streak,
+            history = history,
+            onDismiss = { showStreakSheet = false },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun StreakHistorySheet(
+    streak: Int,
+    history: Set<LocalDate>,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val today = remember { LocalDate.now() }
+    // Last 35 days, oldest first, as five rows of seven ending today.
+    val days = remember { (0L until 35L).map { today.minusDays(34L - it) } }
+    val completedGreen = LocalSemanticColors.current.completedGreen
+    val emptyCell = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = "🔥 " + stringResource(R.string.streak_days, streak),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            for (week in days.chunked(7)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.padding(vertical = 3.dp),
+                ) {
+                    for (day in week) {
+                        val done = day in history
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .background(
+                                    color = if (done) completedGreen else emptyCell,
+                                    shape = RoundedCornerShape(8.dp),
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "${day.dayOfMonth}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (done) {
+                                    MaterialTheme.colorScheme.surface
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyDayState() {
+    val greetingRes = remember {
+        when (java.time.LocalTime.now().hour) {
+            in 5..11 -> R.string.reminder_title_morning
+            in 12..17 -> R.string.reminder_title_midday
+            else -> R.string.reminder_title_evening
+        }
+    }
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(24.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.WbSunny,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                modifier = Modifier.size(48.dp),
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = stringResource(greetingRes),
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.no_tasks_due_today),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
 
 @Composable
@@ -631,9 +740,23 @@ private fun SwipeableTaskRow(
             }
         }
 
+        // TalkBack users can't perform the swipe gesture, so expose the same
+        // operations as custom accessibility actions.
+        val a11yLabelComplete = stringResource(if (isCompleted) R.string.cd_uncomplete else R.string.cd_complete)
+        val a11yLabelPostpone = stringResource(R.string.postpone_title)
+        val a11yActions = remember(isCompleted, postponeEnabled, onToggle, onPostpone) {
+            buildList {
+                add(CustomAccessibilityAction(a11yLabelComplete) { onToggle(); true })
+                if (postponeEnabled && onPostpone != null) {
+                    add(CustomAccessibilityAction(a11yLabelPostpone) { onPostpone(); true })
+                }
+            }
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .semantics { customActions = a11yActions }
                 .clipToBounds()
                 .onSizeChanged { rowWidth = it.width.toFloat() }
                 .graphicsLayer {
@@ -941,6 +1064,7 @@ private fun SectionHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .semantics { heading() }
             .background(bgColor)
             .then(if (collapsible && onToggle != null) Modifier.clickable { onToggle() } else Modifier)
             .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -1397,13 +1521,17 @@ private fun CreateTaskSheet(
 
             if (availableLists.size > 1) {
                 Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
+                val listChipState = rememberLazyListState()
+                LaunchedEffect(Unit) {
+                    val idx = availableLists.indexOfFirst { it.id == selectedList?.id }
+                    if (idx > 0) listChipState.scrollToItem(idx)
+                }
+                LazyRow(
+                    state = listChipState,
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    for (list in availableLists) {
+                    items(availableLists, key = { it.id }) { list ->
                         FilterChip(
                             selected = selectedList?.id == list.id,
                             onClick = { selectedList = list },

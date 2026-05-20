@@ -38,7 +38,9 @@ data class TaskEntity(
 
         fun flatComparator(listOrderIds: List<String>): Comparator<TaskEntity> {
             val orderMap = listOrderIds.withIndex().associate { (i, id) -> id to i }
-            return compareBy<TaskEntity> { orderMap[it.listId] ?: Int.MAX_VALUE }
+            // Unknown lists (not yet in the user's order) sort to the top (-1) so
+            // newly added lists surface instead of sinking to the bottom.
+            return compareBy<TaskEntity> { orderMap[it.listId] ?: -1 }
                 .thenBy { it.due }
                 .thenBy { extractTimeSort(it.dueDateTime) }
                 .thenBy { it.position }

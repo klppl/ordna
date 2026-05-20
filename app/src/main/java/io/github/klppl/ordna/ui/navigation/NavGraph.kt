@@ -14,7 +14,7 @@ import io.github.klppl.ordna.ui.today.TodayScreen
 
 @Composable
 fun OrdnaNavGraph(
-    navigateToToday: Boolean = false,
+    navigateTodayTrigger: Int = 0,
     authViewModel: AuthCheckViewModel = hiltViewModel(),
 ) {
     val isSignedIn by authViewModel.isSignedIn.collectAsState()
@@ -25,9 +25,10 @@ fun OrdnaNavGraph(
     val navController = rememberNavController()
     val startDestination = if (signedIn) "today" else "signin"
 
-    // If launched from notification, pop back to today screen
-    LaunchedEffect(navigateToToday) {
-        if (navigateToToday && signedIn) {
+    // If launched/re-targeted from a notification, pop back to the today screen.
+    // Keyed on a counter so repeated taps re-trigger even while the app is open.
+    LaunchedEffect(navigateTodayTrigger) {
+        if (navigateTodayTrigger > 0 && signedIn) {
             navController.popBackStack("today", inclusive = false)
         }
     }

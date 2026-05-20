@@ -429,8 +429,12 @@ class ToggleTaskAction : ActionCallback {
 
         val task = dao.getTaskById(taskId) ?: return
 
-        val isCompleting = task.status == "needsAction"
-        val newStatus = if (isCompleting) "completed" else "needsAction"
+        val isCompleting = task.status == io.github.klppl.ordna.data.local.TaskStatus.NEEDS_ACTION
+        val newStatus = if (isCompleting) {
+            io.github.klppl.ordna.data.local.TaskStatus.COMPLETED
+        } else {
+            io.github.klppl.ordna.data.local.TaskStatus.NEEDS_ACTION
+        }
         val completedAt = if (isCompleting) java.time.Instant.now() else null
 
         // Mark as pending so sync won't overwrite this optimistic update

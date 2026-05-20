@@ -12,6 +12,7 @@ import com.google.api.services.tasks.TasksScopes
 import com.google.api.services.tasks.model.Task
 import com.google.api.services.tasks.model.TaskList
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.klppl.ordna.data.local.TaskStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -84,7 +85,7 @@ class GoogleTasksApi @Inject constructor(
         listId: String,
         taskId: String,
     ) = withContext(Dispatchers.IO) {
-        val patch = Task().apply { status = "completed" }
+        val patch = Task().apply { status = TaskStatus.COMPLETED }
         getService(accountEmail).tasks().patch(listId, taskId, patch).execute()
     }
 
@@ -93,7 +94,7 @@ class GoogleTasksApi @Inject constructor(
         listId: String,
         taskId: String,
     ) = withContext(Dispatchers.IO) {
-        val patch = Task().apply { status = "needsAction" }
+        val patch = Task().apply { status = TaskStatus.NEEDS_ACTION }
         getService(accountEmail).tasks().patch(listId, taskId, patch).execute()
     }
 
@@ -104,7 +105,7 @@ class GoogleTasksApi @Inject constructor(
         due: java.time.LocalDate? = null,
         notes: String? = null,
     ): com.google.api.services.tasks.model.Task = withContext(Dispatchers.IO) {
-        val task = Task().setTitle(title).setStatus("needsAction")
+        val task = Task().setTitle(title).setStatus(TaskStatus.NEEDS_ACTION)
         if (due != null) {
             task.due = "${due}T00:00:00.000Z"
         }

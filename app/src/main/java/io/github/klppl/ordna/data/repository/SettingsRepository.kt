@@ -84,6 +84,7 @@ class SettingsRepository @Inject constructor(
 
     private val streakCountKey = intPreferencesKey("streak_count")
     private val streakLastDateKey = stringPreferencesKey("streak_last_date")
+    private val streakHistoryKey = stringPreferencesKey("streak_history")
     private val vacationModeKey = booleanPreferencesKey("vacation_mode")
 
     private val listOrderKey = stringPreferencesKey("list_order")
@@ -254,6 +255,15 @@ class SettingsRepository @Inject constructor(
         }
     }
 
+    /** Dates (last ~5 weeks) on which all tasks were completed — drives the streak heatmap. */
+    val streakHistory: Flow<Set<LocalDate>> = context.settingsDataStore.data.map { prefs ->
+        prefs[streakHistoryKey]
+            ?.split(",")
+            ?.mapNotNull { runCatching { LocalDate.parse(it) }.getOrNull() }
+            ?.toSet()
+            ?: emptySet()
+    }
+
     suspend fun resetStreak() {
         context.settingsDataStore.edit { prefs ->
             prefs[streakCountKey] = 0
@@ -270,6 +280,7 @@ class SettingsRepository @Inject constructor(
         context.settingsDataStore.edit { prefs ->
             prefs.remove(streakCountKey)
             prefs.remove(streakLastDateKey)
+            prefs.remove(streakHistoryKey)
             prefs.remove(shareListIdKey)
             prefs.remove(shareListTitleKey)
             prefs.remove(createListIdKey)
@@ -293,6 +304,17 @@ class SettingsRepository @Inject constructor(
             if (next == current) return@edit
             prefs[streakCountKey] = next.count
             next.lastDate?.let { prefs[streakLastDateKey] = it }
+
+            // Record today in the rolling history, pruned to the last 5 weeks.
+            val today = LocalDate.now()
+            val cutoff = today.minusDays(34)
+            val history = prefs[streakHistoryKey]
+                ?.split(",")
+                ?.mapNotNull { runCatching { LocalDate.parse(it) }.getOrNull() }
+                ?.toMutableSet()
+                ?: mutableSetOf()
+            history.add(today)
+            prefs[streakHistoryKey] = history.filter { !it.isBefore(cutoff) }.sorted().joinToString(",")
         }
     }
 

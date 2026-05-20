@@ -132,6 +132,9 @@ class TodayViewModel @Inject constructor(
     val createListTitle: StateFlow<String?> = settingsRepository.createListTitle
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    val streakHistory: StateFlow<Set<java.time.LocalDate>> = settingsRepository.streakHistory
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
     private val taskFlow: kotlinx.coroutines.flow.Flow<TaskInputs> = combine(
         repository.getOverdueTasks(),
         repository.getTodayTasks(),

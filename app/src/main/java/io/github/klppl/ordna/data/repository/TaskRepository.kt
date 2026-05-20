@@ -13,6 +13,7 @@ import androidx.work.workDataOf
 import io.github.klppl.ordna.data.local.TaskDao
 import io.github.klppl.ordna.data.local.TaskDatabase
 import io.github.klppl.ordna.data.local.TaskEntity
+import io.github.klppl.ordna.data.local.TaskStatus
 import io.github.klppl.ordna.data.remote.GoogleTasksApi
 import io.github.klppl.ordna.data.sync.CreateTaskWorker
 import io.github.klppl.ordna.data.sync.MutationWorker
@@ -126,10 +127,10 @@ class TaskRepository @Inject constructor(
 
     suspend fun toggleTask(task: TaskEntity): Result<Unit> = runCatching {
         val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
-        val isCompleting = task.status == "needsAction"
+        val isCompleting = task.status == TaskStatus.NEEDS_ACTION
 
         val now = if (isCompleting) Instant.now() else null
-        val newStatus = if (isCompleting) "completed" else "needsAction"
+        val newStatus = if (isCompleting) TaskStatus.COMPLETED else TaskStatus.NEEDS_ACTION
         taskDao.updateTaskStatus(task.id, newStatus, now)
         updateAllWidgets(context)
 
@@ -146,8 +147,8 @@ class TaskRepository @Inject constructor(
      * BroadcastReceiver / Glance action contexts where we can't block on the API.
      */
     suspend fun toggleTaskDeferred(task: TaskEntity) {
-        val isCompleting = task.status == "needsAction"
-        val newStatus = if (isCompleting) "completed" else "needsAction"
+        val isCompleting = task.status == TaskStatus.NEEDS_ACTION
+        val newStatus = if (isCompleting) TaskStatus.COMPLETED else TaskStatus.NEEDS_ACTION
         val now = if (isCompleting) Instant.now() else null
 
         taskDao.updateTaskStatus(task.id, newStatus, now)
@@ -209,7 +210,7 @@ class TaskRepository @Inject constructor(
             title = title,
             due = due,
             dueDateTime = "${due}T00:00:00.000Z",
-            status = "needsAction",
+            status = TaskStatus.NEEDS_ACTION,
             completedAt = null,
             listId = listId,
             listTitle = listTitle,
@@ -297,11 +298,11 @@ class TaskRepository @Inject constructor(
                     if (title.isBlank()) continue
 
                     val due = GoogleTasksApi.parseDueDate(task.due)
-                    val status = task.status ?: "needsAction"
+                    val status = task.status ?: TaskStatus.NEEDS_ACTION
                     val completedAt = GoogleTasksApi.parseCompletedAt(task.completed)
 
-                    val includeActive = status == "needsAction" && due != null && due <= today
-                    val isCompletedToday = status == "completed" && completedAt != null &&
+                    val includeActive = status == TaskStatus.NEEDS_ACTION && due != null && due <= today
+                    val isCompletedToday = status == TaskStatus.COMPLETED && completedAt != null &&
                             completedAt.atZone(java.time.ZoneId.systemDefault()).toLocalDate() == today
 
                     if (includeActive || isCompletedToday) {

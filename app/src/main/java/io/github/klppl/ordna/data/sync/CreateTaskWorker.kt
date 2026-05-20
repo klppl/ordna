@@ -49,7 +49,7 @@ class CreateTaskWorker @AssistedInject constructor(
                     title = title,
                     due = dueDate,
                     dueDateTime = created.due,
-                    status = created.status ?: "needsAction",
+                    status = created.status ?: io.github.klppl.ordna.data.local.TaskStatus.NEEDS_ACTION,
                     completedAt = null,
                     listId = listId,
                     listTitle = listTitle,

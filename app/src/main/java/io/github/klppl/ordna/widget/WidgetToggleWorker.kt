@@ -45,7 +45,11 @@ class WidgetToggleWorker @AssistedInject constructor(
                 // Permanent failure — revert and notify
                 PendingOperations.remove(taskId)
                 val dao = TaskDatabase.getInstance(applicationContext).taskDao()
-                val revertStatus = if (completing) "needsAction" else "completed"
+                val revertStatus = if (completing) {
+                    io.github.klppl.ordna.data.local.TaskStatus.NEEDS_ACTION
+                } else {
+                    io.github.klppl.ordna.data.local.TaskStatus.COMPLETED
+                }
                 val revertCompleted = if (completing) null else java.time.Instant.now()
                 dao.updateTaskStatus(taskId, revertStatus, revertCompleted)
                 updateAllWidgets(applicationContext)
