@@ -97,6 +97,7 @@ fun SettingsScreen(
     val appLayoutDensity = appState.layoutDensity
 
     val shareListTitle by viewModel.shareListTitle.collectAsState()
+    val shareSetDueToday by viewModel.shareSetDueToday.collectAsState()
     val createListTitle by viewModel.createListTitle.collectAsState()
     val availableLists by viewModel.availableLists.collectAsState()
     val listsLoading by viewModel.listsLoading.collectAsState()
@@ -361,6 +362,13 @@ fun SettingsScreen(
                 isLoading = listsLoading,
                 onExpand = { viewModel.loadAvailableLists() },
                 onSelect = { viewModel.setShareList(it.id, it.title) },
+            )
+
+            SettingToggle(
+                title = stringResource(R.string.settings_share_due_today_title),
+                subtitle = stringResource(R.string.settings_share_due_today_subtitle),
+                checked = shareSetDueToday,
+                onCheckedChange = { viewModel.setShareSetDueToday(it) },
             )
 
             Spacer(modifier = Modifier.height(24.dp))

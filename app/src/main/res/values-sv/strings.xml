@@ -119,6 +119,8 @@
     <string name="settings_section_share">Snabbdelning</string>
     <string name="settings_share_list_title">Standardlista</string>
     <string name="settings_share_list_subtitle">Var delade objekt läggs till</string>
+    <string name="settings_share_due_today_title">Förfaller idag</string>
+    <string name="settings_share_due_today_subtitle">Sätt dagens datum som förfallodatum för delade objekt</string>
     <string name="settings_share_list_none">Ej vald</string>
     <string name="settings_share_list_loading">Laddar listor…</string>
     <string name="share_added_to">Tillagd i %1$s</string>

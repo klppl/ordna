@@ -77,8 +77,13 @@ class ShareActivity : ComponentActivity() {
                 }
 
                 // Route through the repository so the task appears immediately
-                // in the local DB (optimistic insert with due=today).
-                taskRepository.createTask(title, listId, listTitle ?: "Tasks")
+                // in the local DB. Due date is optional (see Quick share settings).
+                val due = if (settingsRepository.getShareSetDueToday()) {
+                    java.time.LocalDate.now()
+                } else {
+                    null
+                }
+                taskRepository.createTask(title, listId, listTitle ?: "Tasks", due = due)
                 Toast.makeText(
                     this@ShareActivity,
                     getString(R.string.share_added_to, listTitle),

@@ -122,6 +122,8 @@
     <string name="settings_section_share">Quick share</string>
     <string name="settings_share_list_title">Default list</string>
     <string name="settings_share_list_subtitle">Where shared items are added</string>
+    <string name="settings_share_due_today_title">Due today</string>
+    <string name="settings_share_due_today_subtitle">Set today as the due date for shared items</string>
     <string name="settings_share_list_none">Not set</string>
     <string name="settings_share_list_loading">Loading lists…</string>
     <string name="share_added_to">Added to %1$s</string>

@@ -83,6 +83,9 @@ class SettingsViewModel @Inject constructor(
     val shareListTitle: StateFlow<String?> = settingsRepository.shareListTitle
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    val shareSetDueToday: StateFlow<Boolean> = settingsRepository.shareSetDueToday
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
     // Create list
     val createListTitle: StateFlow<String?> = settingsRepository.createListTitle
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
@@ -276,6 +279,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setShareList(listId: String, listTitle: String) {
         viewModelScope.launch { settingsRepository.setShareList(listId, listTitle) }
+    }
+
+    fun setShareSetDueToday(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setShareSetDueToday(enabled) }
     }
 
     fun setCreateList(listId: String, listTitle: String) {

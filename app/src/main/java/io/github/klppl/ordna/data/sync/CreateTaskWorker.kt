@@ -31,12 +31,12 @@ class CreateTaskWorker @AssistedInject constructor(
         val title = inputData.getString("title") ?: return Result.failure()
         val listId = inputData.getString("list_id") ?: return Result.failure()
         val listTitle = inputData.getString("list_title") ?: return Result.failure()
-        val dueDateStr = inputData.getString("due_date") ?: return Result.failure()
+        val dueDateStr = inputData.getString("due_date")
         val notes = inputData.getString("notes")
         val email = repository.getAccountEmail() ?: return Result.failure()
 
         val dao = TaskDatabase.getInstance(applicationContext).taskDao()
-        val dueDate = LocalDate.parse(dueDateStr)
+        val dueDate = dueDateStr?.let { LocalDate.parse(it) }
 
         return try {
             val created = api.createTask(email, listId, title, dueDate, notes)

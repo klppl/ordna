@@ -79,6 +79,7 @@ class SettingsRepository @Inject constructor(
     private val appLayoutDensityKey = stringPreferencesKey("app_layout_density")
     private val shareListIdKey = stringPreferencesKey("share_list_id")
     private val shareListTitleKey = stringPreferencesKey("share_list_title")
+    private val shareDueTodayKey = booleanPreferencesKey("share_due_today")
     private val createListIdKey = stringPreferencesKey("create_list_id")
     private val createListTitleKey = stringPreferencesKey("create_list_title")
 
@@ -204,6 +205,18 @@ class SettingsRepository @Inject constructor(
 
     suspend fun getShareListTitle(): String? =
         context.settingsDataStore.data.first()[shareListTitleKey]
+
+    /** Whether shared items get today as their due date (so they appear in Today). */
+    val shareSetDueToday: Flow<Boolean> = context.settingsDataStore.data.map { prefs ->
+        prefs[shareDueTodayKey] ?: true
+    }
+
+    suspend fun setShareSetDueToday(enabled: Boolean) {
+        context.settingsDataStore.edit { it[shareDueTodayKey] = enabled }
+    }
+
+    suspend fun getShareSetDueToday(): Boolean =
+        context.settingsDataStore.data.first()[shareDueTodayKey] ?: true
 
     // -- Create list settings --
 

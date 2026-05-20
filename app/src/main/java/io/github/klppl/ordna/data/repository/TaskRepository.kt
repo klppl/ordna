@@ -198,7 +198,7 @@ class TaskRepository @Inject constructor(
         title: String,
         listId: String,
         listTitle: String,
-        due: LocalDate = LocalDate.now(),
+        due: LocalDate? = LocalDate.now(),
         notes: String? = null,
     ): Result<Unit> = runCatching {
         val email = getAccountEmail() ?: throw IllegalStateException("Not signed in")
@@ -209,7 +209,7 @@ class TaskRepository @Inject constructor(
             id = tempId,
             title = title,
             due = due,
-            dueDateTime = "${due}T00:00:00.000Z",
+            dueDateTime = due?.let { "${it}T00:00:00.000Z" },
             status = TaskStatus.NEEDS_ACTION,
             completedAt = null,
             listId = listId,
@@ -242,7 +242,7 @@ class TaskRepository @Inject constructor(
                     "title" to title,
                     "list_id" to listId,
                     "list_title" to listTitle,
-                    "due_date" to due.toString(),
+                    "due_date" to due?.toString(),
                     "notes" to notes,
                 ))
                 .setConstraints(networkConstraints)
