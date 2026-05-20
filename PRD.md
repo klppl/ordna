@@ -1,4 +1,4 @@
-# Ordna — Improvement PRD
+# Klar — Improvement PRD
 
 Tracking document for fixes, features, and polish items from the codebase review.
 Items are ordered by priority within tiers. Tick the status box as we work through them.
@@ -51,7 +51,7 @@ Items are ordered by priority within tiers. Tick the status box as we work throu
 ### P1.2 `[x]` Sync after share-to-app
 - **Problem.** `ShareActivity` creates remotely but the task doesn't appear locally until WorkManager fires.
 - **Change.** Insert an optimistic local entity (mirror `TaskRepository.createTask`) before calling `finish()`. Reuse the temp-id + reconcile pattern.
-- **Done when.** Sharing text into Ordna and opening the app shows the task immediately.
+- **Done when.** Sharing text into Klar and opening the app shows the task immediately.
 
 ### P1.3 `[x]` Notification action: complete top task
 - **Problem.** `ReminderWorker.kt:88-95` only opens the app.
@@ -64,7 +64,7 @@ Items are ordered by priority within tiers. Tick the status box as we work throu
 - **Done when.** New tasks can be created for any date.
 
 ### P1.5 `[x]` Invalidate API cache + reset settings on sign-out
-- **Problem.** `TaskRepository.clearAccount()` doesn't touch `GoogleTasksApi.cachedService/cachedEmail`. `ordna_settings` (streak, share list) also survives.
+- **Problem.** `TaskRepository.clearAccount()` doesn't touch `GoogleTasksApi.cachedService/cachedEmail`. `klar_settings` (streak, share list) also survives.
 - **Change.** Add `GoogleTasksApi.invalidate()` and call from `clearAccount()`. Reset streak + share-list keys; preserve theme/language/reminder times.
 - **Done when.** Signing out + back in with a different account doesn't reuse the old service or show the old streak.
 

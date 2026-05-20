@@ -62,6 +62,6 @@ def frame_phone(src: Path, dst: Path) -> None:
 
 
 if __name__ == "__main__":
-    today = SNAPSHOTS / "io.github.klppl.ordna.screenshots_ScreenshotTest_todayScreen.png"
+    today = SNAPSHOTS / "io.github.klppl.klar.screenshots_ScreenshotTest_todayScreen.png"
     out = SNAPSHOTS / "today_screen_framed.png"
     frame_phone(today, out)

@@ -41,22 +41,22 @@ GitHub Actions workflows (manual dispatch):
 
 ## Architecture
 
-Single-activity MVVM app using Jetpack Compose, Hilt DI, and the Google Tasks API. Package: `io.github.klppl.ordna`. Displays overdue + today tasks with completion tracking.
+Single-activity MVVM app using Jetpack Compose, Hilt DI, and the Google Tasks API. Package: `io.github.klppl.klar`. Displays overdue + today tasks with completion tracking.
 
 **Data flow:** Compose UI → ViewModel (StateFlow) → Repository → Room (local cache) + Google Tasks API (remote)
 
 **Key layers:**
 - `data/remote/GoogleTasksApi` — OAuth2-authenticated REST client using Google's official Tasks API client library. All calls run on `Dispatchers.IO`.
 - `data/repository/TaskRepository` — Single source of truth. Sync fetches all lists, filters to `due <= today` or `completedToday`, upserts into Room, deletes stale entries. Toggle/postpone/notes use optimistic updates with revert on API failure. Caches task lists in a `MutableStateFlow`.
-- `data/repository/SettingsRepository` — DataStore preferences for app settings, widget settings, reminders, and share list config. Two DataStore files: `ordna_prefs` (account email, sync timestamp) and `ordna_settings` (all UI/widget/reminder preferences).
-- `data/local/TaskEntity` — Flat Room table (`ordna.db`, version 4, destructive migration). Each task carries its `listId`, `listTitle`, and `listColor` (deterministic 8-color palette from listId hash). No separate lists table. Indexed on `(status, due)` and `(status, completedAt)`.
-- `data/sync/SyncWorker` — WorkManager periodic sync (15 min, network required). Enqueued in `OrdnaApplication.onCreate()`.
+- `data/repository/SettingsRepository` — DataStore preferences for app settings, widget settings, reminders, and share list config. Two DataStore files: `klar_prefs` (account email, sync timestamp) and `klar_settings` (all UI/widget/reminder preferences).
+- `data/local/TaskEntity` — Flat Room table (`klar.db`, version 4, destructive migration). Each task carries its `listId`, `listTitle`, and `listColor` (deterministic 8-color palette from listId hash). No separate lists table. Indexed on `(status, due)` and `(status, completedAt)`.
+- `data/sync/SyncWorker` — WorkManager periodic sync (15 min, network required). Enqueued in `KlarApplication.onCreate()`.
 - `data/sync/ReminderWorker` + `ReminderScheduler` — Notification reminders with 3 configurable time slots (morning/midday/evening). Scheduled as OneTimeWork with daily rescheduling. `BootReceiver` reschedules on device reboot.
 
 **Navigation:** Compose Navigation with 3 routes: `signin` → `today` → `settings`. `AuthCheckViewModel` reads DataStore on startup to skip sign-in if already authenticated.
 
 **Widgets:** Two Jetpack Glance widgets:
-- `widget/OrdnaWidget` — Full task list widget (4x4, resizable). Shows overdue/today/completed sections, progress bar, streak. Refresh button calls `TaskRepository.syncForWidget()` directly (not WorkManager).
+- `widget/KlarWidget` — Full task list widget (4x4, resizable). Shows overdue/today/completed sections, progress bar, streak. Refresh button calls `TaskRepository.syncForWidget()` directly (not WorkManager).
 - `widget/CounterWidget` — Compact progress widget (2x1, resizable). Shows "X/Y done" count and streak. Tap opens app.
 - `widget/WidgetUpdater` — `updateAllWidgets()` with 300ms debounce, called after sync/toggle/postpone/notes. Updates both widgets in parallel.
 

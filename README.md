@@ -1,8 +1,8 @@
-# Ordna
+# Klar
 
 A daily task app for Android that syncs with Google Tasks.
 
-[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="60">](http://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/klppl/ordna/releases)
+[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="60">](http://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/klppl/klar/releases)
 
 > On iOS? A friend is building a native port over at [mrboatsman/ordna-ios](https://github.com/mrboatsman/ordna-ios) — go give it some love.
 
@@ -11,16 +11,16 @@ A daily task app for Android that syncs with Google Tasks.
 <p align="center">
   <img src="app/src/test/snapshots/images/today_screen_framed.png" alt="Today screen" width="270">
   &nbsp;&nbsp;
-  <img src="app/src/test/snapshots/images/io.github.klppl.ordna.screenshots_ScreenshotTest_ordnaWidget.png" alt="Task list widget" width="200">
+  <img src="app/src/test/snapshots/images/io.github.klppl.klar.screenshots_ScreenshotTest_klarWidget.png" alt="Task list widget" width="200">
   &nbsp;&nbsp;
-  <img src="app/src/test/snapshots/images/io.github.klppl.ordna.screenshots_ScreenshotTest_counterWidget.png" alt="Counter widget" width="150">
+  <img src="app/src/test/snapshots/images/io.github.klppl.klar.screenshots_ScreenshotTest_counterWidget.png" alt="Counter widget" width="150">
 </p>
 
 ## Why this exists
 
 Every todo app I tried wanted to be a project manager, a habit tracker, a second brain, or all three. I wanted to see today's tasks, check them off, and close the app.
 
-Ordna pulls from Google Tasks, so your tasks live next to Google Calendar, you can add them from Gmail, and if you stop using Ordna your data is still in Google. No new account needed.
+Klar pulls from Google Tasks, so your tasks live next to Google Calendar, you can add them from Gmail, and if you stop using Klar your data is still in Google. No new account needed.
 
 ## What it does
 

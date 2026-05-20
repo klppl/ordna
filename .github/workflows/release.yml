@@ -48,12 +48,12 @@ jobs:
         run: ./gradlew assembleRelease -PVERSION_NAME=${{ inputs.version_name }} -PVERSION_CODE=${{ steps.version.outputs.code }}
 
       - name: Rename APK
-        run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/ordna-v${{ inputs.version_name }}.apk
+        run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/klar-v${{ inputs.version_name }}.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ inputs.version_name }}
-          name: Ordna v${{ inputs.version_name }}
-          files: app/build/outputs/apk/release/ordna-v${{ inputs.version_name }}.apk
+          name: Klar v${{ inputs.version_name }}
+          files: app/build/outputs/apk/release/klar-v${{ inputs.version_name }}.apk
           generate_release_notes: true

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Widget -->
-    <string name="widget_name">Ordna Idag</string>
+    <string name="widget_name">Klar Idag</string>
     <string name="widget_description">Dagens uppgifter i ett ögonkast</string>
     <string name="counter_widget_description">Räknare för återstående uppgifter</string>
     <string name="counter_widget_left">kvar</string>
     <string name="counter_widget_done">Klart</string>
-    <string name="widget_today">Ordna</string>
+    <string name="widget_today">Klar</string>
     <string name="widget_done_count">%1$d/%2$d klara</string>
     <string name="widget_no_tasks">Inga uppgifter idag</string>
     <string name="widget_overdue">försenad</string>
@@ -168,7 +168,7 @@
     <string name="reminder_permission_needed">Aviseringsbehörighet krävs för påminnelser</string>
 
     <!-- Quick Settings tile -->
-    <string name="tile_label">Ordna</string>
+    <string name="tile_label">Klar</string>
     <string name="tile_all_done">Allt klart</string>
     <plurals name="tile_due">
         <item quantity="one">%1$d uppgift kvar</item>

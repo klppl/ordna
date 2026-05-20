@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ordna-android"
+rootProject.name = "klar-android"
 include(":app")

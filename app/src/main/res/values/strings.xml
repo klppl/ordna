@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Ordna</string>
+    <string name="app_name">Klar</string>
 
     <!-- Widget -->
-    <string name="widget_name">Ordna Today</string>
+    <string name="widget_name">Klar Today</string>
     <string name="widget_description">Your daily tasks at a glance</string>
     <string name="counter_widget_description">Remaining tasks counter</string>
     <string name="counter_widget_left">left</string>
     <string name="counter_widget_done">All done</string>
-    <string name="widget_today">Ordna</string>
+    <string name="widget_today">Klar</string>
     <string name="widget_done_count">%1$d/%2$d done</string>
     <string name="widget_no_tasks">No tasks today</string>
     <string name="widget_overdue">overdue</string>
@@ -18,7 +18,7 @@
     <string name="widget_streak">%1$d-day streak</string>
 
     <!-- Sign-in -->
-    <string name="sign_in_title">Ordna</string>
+    <string name="sign_in_title">Klar</string>
     <string name="sign_in_subtitle">Today. Nothing more.</string>
     <string name="sign_in_button">Sign in with Google</string>
     <string name="sign_in_error_no_account">Could not determine Google account</string>
@@ -171,7 +171,7 @@
     <string name="reminder_permission_needed">Notification permission required for reminders</string>
 
     <!-- Quick Settings tile -->
-    <string name="tile_label">Ordna</string>
+    <string name="tile_label">Klar</string>
     <string name="tile_all_done">All done</string>
     <plurals name="tile_due">
         <item quantity="one">%1$d task due</item>

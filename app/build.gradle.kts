@@ -17,11 +17,11 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "io.github.klppl.ordna"
+    namespace = "io.github.klppl.klar"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "io.github.klppl.ordna"
+        applicationId = "io.github.klppl.klar"
         minSdk = 26
         targetSdk = 35
         versionCode = (findProperty("VERSION_CODE") as String?)?.toIntOrNull() ?: 2
