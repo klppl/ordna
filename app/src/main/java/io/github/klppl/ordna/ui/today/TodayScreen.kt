@@ -254,13 +254,23 @@ fun TodayScreen(
             }
         },
     ) { padding ->
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = { viewModel.refresh() },
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
         ) {
+            if (state.filterableLists.size > 1) {
+                ListFilterRow(
+                    lists = state.filterableLists,
+                    hiddenIds = state.hiddenListIds,
+                    onToggle = { viewModel.toggleListVisibility(it) },
+                )
+            }
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.refresh() },
+                modifier = Modifier.fillMaxSize(),
+            ) {
             if (state.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -404,6 +414,7 @@ fun TodayScreen(
                     item(key = "bottom_spacer") { Spacer(modifier = Modifier.height(88.dp)) }
                 }
             }
+            }
         }
     }
 
@@ -467,6 +478,36 @@ fun TodayScreen(
                 showCreateSheet = false
             },
         )
+    }
+}
+
+@Composable
+private fun ListFilterRow(
+    lists: List<ListChip>,
+    hiddenIds: Set<String>,
+    onToggle: (String) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        for (list in lists) {
+            FilterChip(
+                selected = list.id !in hiddenIds,
+                onClick = { onToggle(list.id) },
+                label = { Text(list.title) },
+                leadingIcon = {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .background(Color(list.color), RoundedCornerShape(3.dp)),
+                    )
+                },
+            )
+        }
     }
 }
 

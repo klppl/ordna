@@ -87,6 +87,7 @@ class SettingsRepository @Inject constructor(
     private val vacationModeKey = booleanPreferencesKey("vacation_mode")
 
     private val listOrderKey = stringPreferencesKey("list_order")
+    private val hiddenListIdsKey = stringPreferencesKey("hidden_list_ids")
 
     private val widgetBgKey = stringPreferencesKey("widget_bg")
     private val widgetOpacityKey = floatPreferencesKey("widget_opacity")
@@ -162,6 +163,22 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setListOrder(order: List<String>) {
         context.settingsDataStore.edit { it[listOrderKey] = order.joinToString(",") }
+    }
+
+    // -- List visibility filter (app screen only) --
+
+    val hiddenListIds: Flow<Set<String>> = context.settingsDataStore.data.map { prefs ->
+        prefs[hiddenListIdsKey]?.split(",")?.filter { it.isNotBlank() }?.toSet() ?: emptySet()
+    }
+
+    suspend fun toggleListHidden(listId: String) {
+        context.settingsDataStore.edit { prefs ->
+            val current = prefs[hiddenListIdsKey]
+                ?.split(",")?.filter { it.isNotBlank() }?.toMutableSet()
+                ?: mutableSetOf()
+            if (!current.remove(listId)) current.add(listId)
+            prefs[hiddenListIdsKey] = current.joinToString(",")
+        }
     }
 
     // -- Share settings --
@@ -258,6 +275,7 @@ class SettingsRepository @Inject constructor(
             prefs.remove(createListIdKey)
             prefs.remove(createListTitleKey)
             prefs.remove(vacationModeKey)
+            prefs.remove(hiddenListIdsKey)
         }
     }
 

@@ -88,12 +88,13 @@ Items are ordered by priority within tiers. Tick the status box as we work throu
 - **Done when.** A new PR fails if build or tests fail.
 - **Follow-up:** ktlint was attempted but `ktlint-gradle` v12.1.1/v13.0.0 fails to parse plain Kotlin 2.1 files (likely tooling compat issue). Revisit when the plugin catches up — or switch to Android Lint (`./gradlew lint`) which is already bundled.
 
-### P2.4 `[ ]` Per-list filter chips on TodayScreen
+### P2.4 `[x]` Per-list filter chips on TodayScreen
 - **Problem.** Many lists → hard to focus on one.
 - **Change.** Horizontal chip row above the LazyColumn, collapsed if >3 lists. Toggles visibility; persists in `SettingsRepository`. Top-bar counts stay honest (reflect filter).
 - **Done when.** Filtering hides tasks; refresh persists across app restart.
 
-### P2.5 `[ ]` Quick Settings tile
+### P2.5 `[x]` Quick Settings tile
+- Implemented as tap-to-open with live count. Vacation-toggle-on-long-press dropped — Android's QS API has no custom long-press hook (long-press goes to app info).
 - **Problem.** No glanceable entry outside the home screen.
 - **Change.** `TileService` showing "X due today"; tap opens app; long-press toggles vacation mode.
 - **Done when.** Tile addable from QS panel; reflects state on the next sync.

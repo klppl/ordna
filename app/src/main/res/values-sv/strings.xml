@@ -165,6 +165,14 @@
     </plurals>
     <string name="reminder_permission_needed">Aviseringsbehörighet krävs för påminnelser</string>
 
+    <!-- Quick Settings tile -->
+    <string name="tile_label">Ordna</string>
+    <string name="tile_all_done">Allt klart</string>
+    <plurals name="tile_due">
+        <item quantity="one">%1$d uppgift kvar</item>
+        <item quantity="other">%1$d uppgifter kvar</item>
+    </plurals>
+
     <!-- Sync failure -->
     <string name="sync_fail_channel_name">Synkfel</string>
     <string name="sync_fail_title">Uppdatering misslyckades</string>

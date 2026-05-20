@@ -168,6 +168,14 @@
     </plurals>
     <string name="reminder_permission_needed">Notification permission required for reminders</string>
 
+    <!-- Quick Settings tile -->
+    <string name="tile_label">Ordna</string>
+    <string name="tile_all_done">All done</string>
+    <plurals name="tile_due">
+        <item quantity="one">%1$d task due</item>
+        <item quantity="other">%1$d tasks due</item>
+    </plurals>
+
     <!-- Sync failure -->
     <string name="sync_fail_channel_name">Sync Errors</string>
     <string name="sync_fail_title">Task update failed</string>

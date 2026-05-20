@@ -35,11 +35,16 @@ data class TodayUiState(
     val error: String? = null,
     val authExpired: Boolean = false,
     val streak: Int = 0,
+    val filterableLists: List<ListChip> = emptyList(),
+    val hiddenListIds: Set<String> = emptySet(),
 ) {
     val completedCount: Int get() = completedTasks.size
     val totalCount: Int get() = overdueTasks.size + todayTasks.size + completedTasks.size
     val allCompleted: Boolean get() = totalCount > 0 && completedCount == totalCount
 }
+
+@androidx.compose.runtime.Immutable
+data class ListChip(val id: String, val title: String, val color: Int)
 
 internal data class TaskInputs(
     val overdue: List<TaskEntity>,
@@ -65,14 +70,27 @@ internal data class SettingsInputs(
     val authExpired: Boolean,
     val streak: Int,
     val listOrder: List<String>,
+    val hiddenListIds: Set<String>,
 )
 
 internal fun buildUiState(tasks: TaskInputs, settings: SettingsInputs): TodayUiState {
     val comparator = TaskEntity.flatComparator(settings.listOrder)
+    val hidden = settings.hiddenListIds
+
+    // Chips reflect every list that currently has a task, regardless of the
+    // active filter, so a hidden list can always be toggled back on.
+    val filterable = (tasks.overdue + tasks.today + tasks.completed)
+        .map { ListChip(it.listId, it.listTitle, it.listColor) }
+        .distinctBy { it.id }
+        .sortedBy { it.title }
+
+    fun List<TaskEntity>.maybeSort() = if (tasks.groupByList) this else sortedWith(comparator)
+    fun List<TaskEntity>.visible() = filter { it.listId !in hidden }
+
     return TodayUiState(
-        overdueTasks = if (tasks.groupByList) tasks.overdue else tasks.overdue.sortedWith(comparator),
-        todayTasks = if (tasks.groupByList) tasks.today else tasks.today.sortedWith(comparator),
-        completedTasks = tasks.completed,
+        overdueTasks = tasks.overdue.maybeSort().visible(),
+        todayTasks = tasks.today.maybeSort().visible(),
+        completedTasks = tasks.completed.visible(),
         lastSync = tasks.lastSync,
         groupByList = tasks.groupByList,
         completionMethod = settings.completionMethod,
@@ -82,6 +100,8 @@ internal fun buildUiState(tasks: TaskInputs, settings: SettingsInputs): TodayUiS
         error = settings.error,
         authExpired = settings.authExpired,
         streak = settings.streak,
+        filterableLists = filterable,
+        hiddenListIds = hidden,
     )
 }
 
@@ -136,7 +156,8 @@ class TodayViewModel @Inject constructor(
         },
         settingsRepository.streak,
         settingsRepository.listOrder,
-    ) { partial, streak, listOrder ->
+        settingsRepository.hiddenListIds,
+    ) { partial, streak, listOrder, hiddenListIds ->
         SettingsInputs(
             completionMethod = partial.completionMethod,
             layoutDensity = partial.layoutDensity,
@@ -145,6 +166,7 @@ class TodayViewModel @Inject constructor(
             authExpired = partial.authExpired,
             streak = streak,
             listOrder = listOrder,
+            hiddenListIds = hiddenListIds,
         )
     }
 
@@ -255,6 +277,12 @@ class TodayViewModel @Inject constructor(
             repository.createTask(title, listId, listTitle, due, notes).onFailure { e ->
                 _error.value = e.localizedMessage ?: getString(R.string.create_task_error)
             }
+        }
+    }
+
+    fun toggleListVisibility(listId: String) {
+        viewModelScope.launch {
+            settingsRepository.toggleListHidden(listId)
         }
     }
 
