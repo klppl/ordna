@@ -3,9 +3,15 @@ name: Build APK
 on:
   workflow_dispatch:
     inputs:
-      version_name:
-        description: 'Version (e.g. 1.0.10). Leave blank to auto-bump the patch from the latest tag.'
-        required: false
+      bump:
+        description: 'Which part of the version to bump'
+        type: choice
+        required: true
+        default: patch
+        options:
+          - patch
+          - minor
+          - major
 
 jobs:
   build:
@@ -30,15 +36,15 @@ jobs:
       - name: Determine version
         id: version
         run: |
-          name="${{ inputs.version_name }}"
-          if [ -z "$name" ]; then
-            latest=$(git tag -l 'v*.*.*' | sort -V | tail -n1)
-            latest=${latest:-v1.0.0}
-            IFS='.' read -r major minor patch <<< "${latest#v}"
-            patch=$((patch + 1))
-            name="$major.$minor.$patch"
-          fi
-          IFS='.' read -r major minor patch <<< "$name"
+          latest=$(git tag -l 'v*.*.*' | sort -V | tail -n1)
+          latest=${latest:-v1.0.0}
+          IFS='.' read -r major minor patch <<< "${latest#v}"
+          case "${{ inputs.bump }}" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+          esac
+          name="$major.$minor.$patch"
           code=$(( major * 10000 + minor * 100 + patch ))
           echo "name=$name" >> "$GITHUB_OUTPUT"
           echo "code=$code" >> "$GITHUB_OUTPUT"

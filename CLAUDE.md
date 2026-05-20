@@ -46,7 +46,7 @@ Rebuild the CI secrets (`KEYSTORE_BASE64`, `KEY_ALIAS=klar`, passwords) from the
 ## CI/CD
 
 Single GitHub Actions workflow (manual dispatch):
-- **build.yml** ("Build APK") — builds signed release APK and creates a GitHub Release with tag. Auto-numbers the version: reads the latest `v*.*.*` tag and bumps the patch (override via the optional `version_name` input). Derives `versionCode` as `major*10000 + minor*100 + patch`. Requires secrets: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
+- **build.yml** ("Build APK") — builds signed release APK and creates a GitHub Release with tag. Auto-numbers from the latest `v*.*.*` tag using a `bump` dropdown input (`patch`/`minor`/`major`): patch → `1.0.1`, minor → `1.1.0`, major → `2.0.0`. Derives `versionCode` as `major*10000 + minor*100 + patch`. Requires secrets: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
 
 ## Architecture
 
