@@ -1,14 +1,22 @@
-name: Build Debug APK
+name: Build APK
 
 on:
   workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version (e.g. 1.0.10). Leave blank to auto-bump the patch from the latest tag.'
+        required: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # need full tag history to derive the next version
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -19,11 +27,45 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug
+      - name: Determine version
+        id: version
+        run: |
+          name="${{ inputs.version_name }}"
+          if [ -z "$name" ]; then
+            latest=$(git tag -l 'v*.*.*' | sort -V | tail -n1)
+            latest=${latest:-v1.0.0}
+            IFS='.' read -r major minor patch <<< "${latest#v}"
+            patch=$((patch + 1))
+            name="$major.$minor.$patch"
+          fi
+          IFS='.' read -r major minor patch <<< "$name"
+          code=$(( major * 10000 + minor * 100 + patch ))
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "Building v$name (versionCode $code)"
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ${{ github.workspace }}/release.keystore
+
+      - name: Create keystore.properties
+        run: |
+          cat > keystore.properties <<EOF
+          storeFile=${{ github.workspace }}/release.keystore
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          EOF
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease -PVERSION_NAME=${{ steps.version.outputs.name }} -PVERSION_CODE=${{ steps.version.outputs.code }}
+
+      - name: Rename APK
+        run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/klar-v${{ steps.version.outputs.name }}.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: klar-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          tag_name: v${{ steps.version.outputs.name }}
+          name: Klar v${{ steps.version.outputs.name }}
+          files: app/build/outputs/apk/release/klar-v${{ steps.version.outputs.name }}.apk
+          generate_release_notes: true

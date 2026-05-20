@@ -25,19 +25,28 @@ No test infrastructure exists yet. No linter is configured.
 Both debug and release builds use the same release keystore so APKs are interchangeable on device (no signature mismatch). The signing config reads from `keystore.properties` in the project root (gitignored). On a new machine, create this file:
 
 ```properties
-storeFile=/path/to/ordna-release.keystore
+storeFile=/path/to/klar-release.keystore
 storePassword=<password>
-keyAlias=ordna
+keyAlias=klar
 keyPassword=<password>
 ```
 
 The keystore must be the same one registered in Google Cloud Console for the Google Tasks API OAuth client (SHA1 fingerprint). Without `keystore.properties`, builds will be unsigned and Google sign-in won't work.
 
+If the keystore is lost, generate a fresh one (alias `klar`), then add its SHA1 to the Android OAuth client in Google Cloud Console (package `io.github.klppl.klar`):
+
+```bash
+keytool -genkeypair -v -keystore klar-release.keystore -alias klar \
+  -keyalg RSA -keysize 2048 -validity 10000
+keytool -list -v -keystore klar-release.keystore -alias klar | grep -A1 SHA1
+```
+
+Rebuild the CI secrets (`KEYSTORE_BASE64`, `KEY_ALIAS=klar`, passwords) from the new file.
+
 ## CI/CD
 
-GitHub Actions workflows (manual dispatch):
-- **build.yml** — builds debug APK, uploads as artifact
-- **release.yml** — builds release APK, creates GitHub Release with tag. Takes `version_name` and `version_code` as inputs. Requires secrets: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
+Single GitHub Actions workflow (manual dispatch):
+- **build.yml** ("Build APK") — builds signed release APK and creates a GitHub Release with tag. Auto-numbers the version: reads the latest `v*.*.*` tag and bumps the patch (override via the optional `version_name` input). Derives `versionCode` as `major*10000 + minor*100 + patch`. Requires secrets: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
 
 ## Architecture
 
