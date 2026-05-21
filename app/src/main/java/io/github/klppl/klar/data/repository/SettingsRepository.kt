@@ -26,6 +26,8 @@ enum class LayoutDensity { COMFORTABLE, DEFAULT, COMPACT }
 
 enum class WidgetSorting { FLAT, BY_LIST }
 
+enum class RoutinesPosition { TOP, BOTTOM }
+
 data class WidgetSettings(
     val background: WidgetBackground = WidgetBackground.AUTO,
     val opacity: Float = 1f,
@@ -82,6 +84,9 @@ class SettingsRepository @Inject constructor(
     private val shareDueTodayKey = booleanPreferencesKey("share_due_today")
     private val createListIdKey = stringPreferencesKey("create_list_id")
     private val createListTitleKey = stringPreferencesKey("create_list_title")
+    private val dailiesListIdKey = stringPreferencesKey("dailies_list_id")
+    private val dailiesListTitleKey = stringPreferencesKey("dailies_list_title")
+    private val routinesPositionKey = stringPreferencesKey("routines_position")
 
     private val streakCountKey = intPreferencesKey("streak_count")
     private val streakLastDateKey = stringPreferencesKey("streak_last_date")
@@ -248,6 +253,39 @@ class SettingsRepository @Inject constructor(
     suspend fun getCreateListTitle(): String? =
         context.settingsDataStore.data.first()[createListTitleKey]
 
+    // -- Dailies / routines list --
+
+    /** Tasks in this list render in a dedicated Routines section, never as overdue. */
+    val dailiesListId: Flow<String?> = context.settingsDataStore.data.map { prefs ->
+        prefs[dailiesListIdKey]
+    }
+
+    val dailiesListTitle: Flow<String?> = context.settingsDataStore.data.map { prefs ->
+        prefs[dailiesListTitleKey]
+    }
+
+    val routinesPosition: Flow<RoutinesPosition> = context.settingsDataStore.data.map { prefs ->
+        RoutinesPosition.entries.find { it.name == prefs[routinesPositionKey] } ?: RoutinesPosition.BOTTOM
+    }
+
+    suspend fun setDailiesList(listId: String, listTitle: String) {
+        context.settingsDataStore.edit {
+            it[dailiesListIdKey] = listId
+            it[dailiesListTitleKey] = listTitle
+        }
+    }
+
+    suspend fun clearDailiesList() {
+        context.settingsDataStore.edit {
+            it.remove(dailiesListIdKey)
+            it.remove(dailiesListTitleKey)
+        }
+    }
+
+    suspend fun setRoutinesPosition(position: RoutinesPosition) {
+        context.settingsDataStore.edit { it[routinesPositionKey] = position.name }
+    }
+
     // -- Streak --
 
     val streak: Flow<Int> = context.settingsDataStore.data.map { prefs ->
@@ -298,6 +336,8 @@ class SettingsRepository @Inject constructor(
             prefs.remove(shareListTitleKey)
             prefs.remove(createListIdKey)
             prefs.remove(createListTitleKey)
+            prefs.remove(dailiesListIdKey)
+            prefs.remove(dailiesListTitleKey)
             prefs.remove(vacationModeKey)
             prefs.remove(hiddenListIdsKey)
         }

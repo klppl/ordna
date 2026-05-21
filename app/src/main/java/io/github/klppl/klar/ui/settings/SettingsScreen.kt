@@ -75,6 +75,7 @@ import kotlinx.coroutines.launch
 import io.github.klppl.klar.R
 import io.github.klppl.klar.data.repository.CompletionMethod
 import io.github.klppl.klar.data.repository.LayoutDensity
+import io.github.klppl.klar.data.repository.RoutinesPosition
 import io.github.klppl.klar.data.repository.WidgetBackground
 import io.github.klppl.klar.data.repository.WidgetSorting
 import io.github.klppl.klar.ui.theme.AppTheme
@@ -99,6 +100,8 @@ fun SettingsScreen(
     val shareListTitle by viewModel.shareListTitle.collectAsState()
     val shareSetDueToday by viewModel.shareSetDueToday.collectAsState()
     val createListTitle by viewModel.createListTitle.collectAsState()
+    val dailiesListTitle by viewModel.dailiesListTitle.collectAsState()
+    val routinesPosition by viewModel.routinesPosition.collectAsState()
     val availableLists by viewModel.availableLists.collectAsState()
     val listsLoading by viewModel.listsLoading.collectAsState()
     val orderedLists by viewModel.orderedLists.collectAsState()
@@ -346,6 +349,44 @@ fun SettingsScreen(
                 onSelect = { viewModel.setCreateList(it.id, it.title) },
                 onClear = { viewModel.clearCreateList() },
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ── Routines ──
+            SettingSectionHeader(stringResource(R.string.settings_section_routines))
+
+            SettingLabel(
+                title = stringResource(R.string.settings_dailies_list_title),
+                subtitle = stringResource(R.string.settings_dailies_list_subtitle),
+            )
+            ShareListPicker(
+                selectedTitle = dailiesListTitle,
+                availableLists = availableLists,
+                isLoading = listsLoading,
+                onExpand = { viewModel.loadAvailableLists() },
+                onSelect = { viewModel.setDailiesList(it.id, it.title) },
+                onClear = { viewModel.clearDailiesList() },
+            )
+
+            if (dailiesListTitle != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                SettingLabel(
+                    title = stringResource(R.string.settings_routines_position_title),
+                    subtitle = stringResource(R.string.settings_routines_position_subtitle),
+                )
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    SegmentedButton(
+                        selected = routinesPosition == RoutinesPosition.TOP,
+                        onClick = { viewModel.setRoutinesPosition(RoutinesPosition.TOP) },
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                    ) { Text(stringResource(R.string.settings_routines_position_top)) }
+                    SegmentedButton(
+                        selected = routinesPosition == RoutinesPosition.BOTTOM,
+                        onClick = { viewModel.setRoutinesPosition(RoutinesPosition.BOTTOM) },
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                    ) { Text(stringResource(R.string.settings_routines_position_bottom)) }
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

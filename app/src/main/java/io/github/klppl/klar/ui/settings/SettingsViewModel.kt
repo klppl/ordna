@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import io.github.klppl.klar.data.repository.CompletionMethod
 import io.github.klppl.klar.data.repository.LayoutDensity
+import io.github.klppl.klar.data.repository.RoutinesPosition
 import io.github.klppl.klar.data.repository.SettingsRepository
 import io.github.klppl.klar.data.repository.TaskRepository
 import io.github.klppl.klar.data.repository.WidgetBackground
@@ -89,6 +90,13 @@ class SettingsViewModel @Inject constructor(
     // Create list
     val createListTitle: StateFlow<String?> = settingsRepository.createListTitle
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    // Dailies / routines list
+    val dailiesListTitle: StateFlow<String?> = settingsRepository.dailiesListTitle
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val routinesPosition: StateFlow<RoutinesPosition> = settingsRepository.routinesPosition
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RoutinesPosition.BOTTOM)
 
     private val _availableLists = MutableStateFlow<List<TaskListOption>>(emptyList())
     val availableLists: StateFlow<List<TaskListOption>> = _availableLists.asStateFlow()
@@ -291,6 +299,18 @@ class SettingsViewModel @Inject constructor(
 
     fun clearCreateList() {
         viewModelScope.launch { settingsRepository.clearCreateList() }
+    }
+
+    fun setDailiesList(listId: String, listTitle: String) {
+        viewModelScope.launch { settingsRepository.setDailiesList(listId, listTitle) }
+    }
+
+    fun clearDailiesList() {
+        viewModelScope.launch { settingsRepository.clearDailiesList() }
+    }
+
+    fun setRoutinesPosition(position: RoutinesPosition) {
+        viewModelScope.launch { settingsRepository.setRoutinesPosition(position) }
     }
 
     fun loadAvailableLists() {

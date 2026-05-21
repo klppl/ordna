@@ -26,6 +26,7 @@
     <string name="section_overdue">Försenade</string>
     <string name="section_due_today">Idag</string>
     <string name="section_completed">Klara</string>
+    <string name="section_routines">Rutiner</string>
     <string name="no_tasks_due_today">Inga uppgifter idag</string>
     <string name="all_done_title">Allt klart!</string>
     <string name="all_done_subtitle">Du har slutfört allt för idag</string>
@@ -116,6 +117,13 @@
     <string name="settings_widget_color_black">Svart</string>
 
     <!-- Quick share -->
+    <string name="settings_section_routines">Rutiner</string>
+    <string name="settings_dailies_list_title">Rutinlista</string>
+    <string name="settings_dailies_list_subtitle">Uppgifter i den här listan visas i en separat rutinsektion, aldrig som försenade</string>
+    <string name="settings_routines_position_title">Rutinernas placering</string>
+    <string name="settings_routines_position_subtitle">Var rutinsektionen visas på Idag-skärmen</string>
+    <string name="settings_routines_position_top">Överst</string>
+    <string name="settings_routines_position_bottom">Nederst</string>
     <string name="settings_section_share">Snabbdelning</string>
     <string name="settings_share_list_title">Standardlista</string>
     <string name="settings_share_list_subtitle">Var delade objekt läggs till</string>

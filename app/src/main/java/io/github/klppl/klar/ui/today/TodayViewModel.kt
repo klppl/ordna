@@ -8,6 +8,7 @@ import io.github.klppl.klar.data.local.TaskEntity
 import io.github.klppl.klar.data.remote.GoogleTasksApi
 import io.github.klppl.klar.data.repository.CompletionMethod
 import io.github.klppl.klar.data.repository.LayoutDensity
+import io.github.klppl.klar.data.repository.RoutinesPosition
 import io.github.klppl.klar.data.repository.SettingsRepository
 import io.github.klppl.klar.data.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,7 +26,9 @@ import javax.inject.Inject
 data class TodayUiState(
     val overdueTasks: List<TaskEntity> = emptyList(),
     val todayTasks: List<TaskEntity> = emptyList(),
+    val routineTasks: List<TaskEntity> = emptyList(),
     val completedTasks: List<TaskEntity> = emptyList(),
+    val routinesPosition: RoutinesPosition = RoutinesPosition.BOTTOM,
     val groupByList: Boolean = false,
     val completionMethod: CompletionMethod = CompletionMethod.BOTH,
     val layoutDensity: LayoutDensity = LayoutDensity.DEFAULT,
@@ -39,7 +42,8 @@ data class TodayUiState(
     val hiddenListIds: Set<String> = emptySet(),
 ) {
     val completedCount: Int get() = completedTasks.size
-    val totalCount: Int get() = overdueTasks.size + todayTasks.size + completedTasks.size
+    val totalCount: Int
+        get() = overdueTasks.size + todayTasks.size + routineTasks.size + completedTasks.size
     val allCompleted: Boolean get() = totalCount > 0 && completedCount == totalCount
 }
 
@@ -71,6 +75,13 @@ internal data class SettingsInputs(
     val streak: Int,
     val listOrder: List<String>,
     val hiddenListIds: Set<String>,
+    val dailiesListId: String?,
+    val routinesPosition: RoutinesPosition,
+)
+
+internal data class RoutinesConfig(
+    val dailiesListId: String?,
+    val position: RoutinesPosition,
 )
 
 internal fun buildUiState(tasks: TaskInputs, settings: SettingsInputs): TodayUiState {
@@ -87,10 +98,22 @@ internal fun buildUiState(tasks: TaskInputs, settings: SettingsInputs): TodayUiS
     fun List<TaskEntity>.maybeSort() = if (tasks.groupByList) this else sortedWith(comparator)
     fun List<TaskEntity>.visible() = filter { it.listId !in hidden }
 
+    // Active tasks in the designated dailies list are pulled into their own
+    // Routines section and never shown as overdue/today. Completed routines are
+    // left in the normal Completed section.
+    val dailiesId = settings.dailiesListId
+    fun TaskEntity.isRoutine() = dailiesId != null && listId == dailiesId
+
+    val routines = (tasks.overdue + tasks.today).filter { it.isRoutine() }
+    val overdue = tasks.overdue.filter { !it.isRoutine() }
+    val today = tasks.today.filter { !it.isRoutine() }
+
     return TodayUiState(
-        overdueTasks = tasks.overdue.maybeSort().visible(),
-        todayTasks = tasks.today.maybeSort().visible(),
+        overdueTasks = overdue.maybeSort().visible(),
+        todayTasks = today.maybeSort().visible(),
+        routineTasks = routines.sortedWith(comparator).visible(),
         completedTasks = tasks.completed.visible(),
+        routinesPosition = settings.routinesPosition,
         lastSync = tasks.lastSync,
         groupByList = tasks.groupByList,
         completionMethod = settings.completionMethod,
@@ -160,7 +183,11 @@ class TodayViewModel @Inject constructor(
         settingsRepository.streak,
         settingsRepository.listOrder,
         settingsRepository.hiddenListIds,
-    ) { partial, streak, listOrder, hiddenListIds ->
+        combine(
+            settingsRepository.dailiesListId,
+            settingsRepository.routinesPosition,
+        ) { dailiesListId, position -> RoutinesConfig(dailiesListId, position) },
+    ) { partial, streak, listOrder, hiddenListIds, routines ->
         SettingsInputs(
             completionMethod = partial.completionMethod,
             layoutDensity = partial.layoutDensity,
@@ -170,6 +197,8 @@ class TodayViewModel @Inject constructor(
             streak = streak,
             listOrder = listOrder,
             hiddenListIds = hiddenListIds,
+            dailiesListId = routines.dailiesListId,
+            routinesPosition = routines.position,
         )
     }
 

@@ -122,6 +122,7 @@ import io.github.klppl.klar.R
 import io.github.klppl.klar.data.local.TaskEntity
 import io.github.klppl.klar.data.repository.CompletionMethod
 import io.github.klppl.klar.data.repository.LayoutDensity
+import io.github.klppl.klar.data.repository.RoutinesPosition
 import io.github.klppl.klar.ui.theme.LocalSemanticColors
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -146,6 +147,7 @@ fun TodayScreen(
     val context = LocalContext.current
     val undoLabel = stringResource(R.string.snackbar_undo)
     var overdueExpanded by rememberSaveable { mutableStateOf(true) }
+    var routinesExpanded by rememberSaveable { mutableStateOf(true) }
 
     // Postpone dialog state
     var postponeTask by remember { mutableStateOf<TaskEntity?>(null) }
@@ -307,6 +309,29 @@ fun TodayScreen(
                         }
                     }
 
+                    // Routines section — top placement
+                    if (state.routineTasks.isNotEmpty() &&
+                        state.routinesPosition == RoutinesPosition.TOP
+                    ) {
+                        routinesSection(
+                            tasks = state.routineTasks,
+                            expanded = routinesExpanded,
+                            onToggleExpanded = { routinesExpanded = !routinesExpanded },
+                            completionMethod = state.completionMethod,
+                            layoutDensity = state.layoutDensity,
+                            onToggle = { toggleWithUndo(it) },
+                            onTap = { detailTask = it },
+                        )
+                        if (state.overdueTasks.isNotEmpty() ||
+                            state.todayTasks.isNotEmpty() ||
+                            state.completedTasks.isNotEmpty()
+                        ) {
+                            item(key = "routines_top_spacer") {
+                                Spacer(modifier = Modifier.height(12.dp))
+                            }
+                        }
+                    }
+
                     // Overdue section (collapsible)
                     if (state.overdueTasks.isNotEmpty()) {
                         item(key = "overdue_header") {
@@ -381,6 +406,24 @@ fun TodayScreen(
                             completionMethod = state.completionMethod,
                             layoutDensity = state.layoutDensity,
                             isCompleted = true,
+                            onToggle = { toggleWithUndo(it) },
+                            onTap = { detailTask = it },
+                        )
+                    }
+
+                    // Routines section — bottom placement (default)
+                    if (state.routineTasks.isNotEmpty() &&
+                        state.routinesPosition == RoutinesPosition.BOTTOM
+                    ) {
+                        item(key = "routines_bottom_spacer") {
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+                        routinesSection(
+                            tasks = state.routineTasks,
+                            expanded = routinesExpanded,
+                            onToggleExpanded = { routinesExpanded = !routinesExpanded },
+                            completionMethod = state.completionMethod,
+                            layoutDensity = state.layoutDensity,
                             onToggle = { toggleWithUndo(it) },
                             onTap = { detailTask = it },
                         )
@@ -671,6 +714,43 @@ private fun LazyListScope.taskSection(
                 showBadge = true,
             )
         }
+    }
+}
+
+/**
+ * Dedicated section for the designated dailies list. Routines are rendered flat
+ * (single list) with a distinct tertiary-colored, collapsible header. Postpone is
+ * intentionally disabled — repeating tasks roll forward via Google's recurrence.
+ */
+private fun LazyListScope.routinesSection(
+    tasks: List<TaskEntity>,
+    expanded: Boolean,
+    onToggleExpanded: () -> Unit,
+    completionMethod: CompletionMethod,
+    layoutDensity: LayoutDensity,
+    onToggle: (TaskEntity) -> Unit,
+    onTap: (TaskEntity) -> Unit,
+) {
+    item(key = "routines_header") {
+        SectionHeader(
+            title = "🔁 " + stringResource(R.string.section_routines),
+            count = tasks.size,
+            color = MaterialTheme.colorScheme.tertiary,
+            collapsible = true,
+            expanded = expanded,
+            onToggle = onToggleExpanded,
+        )
+    }
+    if (expanded) {
+        taskSection(
+            tasks = tasks,
+            keyPrefix = "routines",
+            groupByList = false,
+            completionMethod = completionMethod,
+            layoutDensity = layoutDensity,
+            onToggle = onToggle,
+            onTap = onTap,
+        )
     }
 }
 

@@ -29,6 +29,7 @@
     <string name="section_overdue">Overdue</string>
     <string name="section_due_today">Due Today</string>
     <string name="section_completed">Completed</string>
+    <string name="section_routines">Routines</string>
     <string name="no_tasks_due_today">No tasks due today</string>
     <string name="all_done_title">All done!</string>
     <string name="all_done_subtitle">You\'ve completed everything for today</string>
@@ -119,6 +120,13 @@
     <string name="settings_widget_color_black">Black</string>
 
     <!-- Quick share -->
+    <string name="settings_section_routines">Routines</string>
+    <string name="settings_dailies_list_title">Routines list</string>
+    <string name="settings_dailies_list_subtitle">Tasks in this list show in a separate Routines section, never as overdue</string>
+    <string name="settings_routines_position_title">Routines position</string>
+    <string name="settings_routines_position_subtitle">Where the Routines section appears on the Today screen</string>
+    <string name="settings_routines_position_top">Top</string>
+    <string name="settings_routines_position_bottom">Bottom</string>
     <string name="settings_section_share">Quick share</string>
     <string name="settings_share_list_title">Default list</string>
     <string name="settings_share_list_subtitle">Where shared items are added</string>
