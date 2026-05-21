@@ -386,7 +386,26 @@ fun TodayScreen(
                         )
                     }
 
-                    // Completed section
+                    // Routines section — bottom placement (default).
+                    // Rendered before Completed so Completed always stays last.
+                    if (state.routineTasks.isNotEmpty() &&
+                        state.routinesPosition == RoutinesPosition.BOTTOM
+                    ) {
+                        item(key = "routines_bottom_spacer") {
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+                        routinesSection(
+                            tasks = state.routineTasks,
+                            expanded = routinesExpanded,
+                            onToggleExpanded = { routinesExpanded = !routinesExpanded },
+                            completionMethod = state.completionMethod,
+                            layoutDensity = state.layoutDensity,
+                            onToggle = { toggleWithUndo(it) },
+                            onTap = { detailTask = it },
+                        )
+                    }
+
+                    // Completed section — always last
                     if (state.completedTasks.isNotEmpty()) {
                         item(key = "completed_spacer") {
                             Spacer(modifier = Modifier.height(8.dp))
@@ -406,24 +425,6 @@ fun TodayScreen(
                             completionMethod = state.completionMethod,
                             layoutDensity = state.layoutDensity,
                             isCompleted = true,
-                            onToggle = { toggleWithUndo(it) },
-                            onTap = { detailTask = it },
-                        )
-                    }
-
-                    // Routines section — bottom placement (default)
-                    if (state.routineTasks.isNotEmpty() &&
-                        state.routinesPosition == RoutinesPosition.BOTTOM
-                    ) {
-                        item(key = "routines_bottom_spacer") {
-                            Spacer(modifier = Modifier.height(12.dp))
-                        }
-                        routinesSection(
-                            tasks = state.routineTasks,
-                            expanded = routinesExpanded,
-                            onToggleExpanded = { routinesExpanded = !routinesExpanded },
-                            completionMethod = state.completionMethod,
-                            layoutDensity = state.layoutDensity,
                             onToggle = { toggleWithUndo(it) },
                             onTap = { detailTask = it },
                         )
