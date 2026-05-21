@@ -48,7 +48,6 @@ class CreateTaskWorker @AssistedInject constructor(
                     id = created.id,
                     title = title,
                     due = dueDate,
-                    dueDateTime = created.due,
                     status = created.status ?: io.github.klppl.klar.data.local.TaskStatus.NEEDS_ACTION,
                     completedAt = null,
                     listId = listId,

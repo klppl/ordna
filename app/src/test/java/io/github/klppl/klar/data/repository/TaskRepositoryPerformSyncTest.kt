@@ -119,7 +119,6 @@ class TaskRepositoryPerformSyncTest {
             id = "t1",
             title = "Locally completed",
             due = today,
-            dueDateTime = "${today}T00:00:00.000Z",
             status = "completed",
             completedAt = Instant.now(),
             listId = "list1",

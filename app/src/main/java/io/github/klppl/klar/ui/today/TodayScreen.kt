@@ -1047,6 +1047,15 @@ private fun TaskRow(
                 .padding(vertical = if (showCheckbox) 0.dp else noCheckboxVerticalPad),
         )
 
+        TaskEntity.parseNoteTime(task.notes)?.let { minutes ->
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = String.format("%02d:%02d", minutes / 60, minutes % 60),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
         if (!task.notes.isNullOrBlank()) {
             Spacer(modifier = Modifier.width(4.dp))
             Icon(

@@ -17,7 +17,6 @@ data class TaskEntity(
     @PrimaryKey val id: String,
     val title: String,
     val due: LocalDate?,
-    val dueDateTime: String?, // Raw RFC 3339 from API, preserves time info for sorting
     val status: String, // "needsAction" or "completed"
     val completedAt: Instant?,
     val listId: String,
@@ -28,12 +27,18 @@ data class TaskEntity(
     val updated: Instant,
 ) {
     companion object {
-        private fun extractTimeSort(dueDateTime: String?): String {
-            if (dueDateTime == null) return "99:99:99"
-            val tIndex = dueDateTime.indexOf('T')
-            if (tIndex < 0) return "99:99:99"
-            val timePart = dueDateTime.substring(tIndex + 1).take(8)
-            return if (timePart.startsWith("00:00:00")) "99:99:99" else timePart
+        // The Google Tasks API discards the time-of-day on due dates, so a time
+        // is encoded in the task notes as a `t/HH:MM` tag (`t/07:00`, also accepts
+        // a dot separator and single-digit hours: `t/7.00`). See README.
+        private val NOTE_TIME = Regex("""(?i)\bt/(\d{1,2})[.:](\d{2})\b""")
+
+        /** Minutes-of-day from a `t/HH:MM` tag in [notes], or null if absent/invalid. */
+        fun parseNoteTime(notes: String?): Int? {
+            val m = notes?.let { NOTE_TIME.find(it) } ?: return null
+            val hour = m.groupValues[1].toInt()
+            val minute = m.groupValues[2].toInt()
+            if (hour !in 0..23 || minute !in 0..59) return null
+            return hour * 60 + minute
         }
 
         fun flatComparator(listOrderIds: List<String>): Comparator<TaskEntity> {
@@ -42,7 +47,8 @@ data class TaskEntity(
             // newly added lists surface instead of sinking to the bottom.
             return compareBy<TaskEntity> { orderMap[it.listId] ?: -1 }
                 .thenBy { it.due }
-                .thenBy { extractTimeSort(it.dueDateTime) }
+                // Timed tasks (t/HH:MM in notes) sort ascending; untimed sink below.
+                .thenBy { parseNoteTime(it.notes) ?: Int.MAX_VALUE }
                 .thenBy { it.position }
         }
     }

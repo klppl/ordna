@@ -25,6 +25,7 @@ Klar pulls from Google Tasks, so your tasks live next to Google Calendar, you ca
 ## What it does
 
 - Shows overdue and today's tasks, grouped by list or flat
+- Designate a list as **Routines** (e.g. daily repeats) — shown in its own section, never as overdue, with optional per-task times (see below)
 - Swipe left to complete, swipe right to postpone to tomorrow
 - Two home screen widgets (task list and progress counter)
 - Share URLs or text from any app into your default task list
@@ -37,6 +38,16 @@ Klar pulls from Google Tasks, so your tasks live next to Google Calendar, you ca
 ## How it works
 
 Tasks are cached locally in Room and synced with the Google Tasks API every 15 minutes or when you pull to refresh. Changes show up immediately and revert if the API call fails. If you're offline, operations queue up and retry when you're back.
+
+### Task times (`t/HH:MM` in notes)
+
+The Google Tasks API only stores a due *date* — it discards the time of day and gives no way to read or write it. So Klar reads a time tag from a task's **notes** instead:
+
+```
+t/07:00
+```
+
+Add `t/07:00` (or `t/7.00` — a dot separator and single-digit hours are accepted, case-insensitive) anywhere in a task's notes. Klar parses it, shows the time on the task row, and sorts timed tasks ascending with untimed tasks below. This is most useful for the Routines list, where daily repeats often have a natural time (`t/07:00`, `t/12:00`, …). The tag stays in the notes as the source of truth; it doesn't sync a real time back to Google.
 
 Kotlin, Jetpack Compose, Hilt, WorkManager. Single-activity MVVM. Min SDK 26.
 
