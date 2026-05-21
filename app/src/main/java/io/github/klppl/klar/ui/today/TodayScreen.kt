@@ -270,13 +270,6 @@ fun TodayScreen(
                 .fillMaxSize()
                 .padding(padding),
         ) {
-            if (state.filterableLists.size > 1) {
-                ListFilterRow(
-                    lists = state.filterableLists,
-                    hiddenIds = state.hiddenListIds,
-                    onToggle = { viewModel.toggleListVisibility(it) },
-                )
-            }
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
                 onRefresh = { viewModel.refresh() },
@@ -629,36 +622,6 @@ private fun EmptyDayState() {
                 text = stringResource(R.string.no_tasks_due_today),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ListFilterRow(
-    lists: List<ListChip>,
-    hiddenIds: Set<String>,
-    onToggle: (String) -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        for (list in lists) {
-            FilterChip(
-                selected = list.id !in hiddenIds,
-                onClick = { onToggle(list.id) },
-                label = { Text(list.title) },
-                leadingIcon = {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .background(Color(list.color), RoundedCornerShape(3.dp)),
-                    )
-                },
             )
         }
     }

@@ -38,17 +38,12 @@ data class TodayUiState(
     val error: String? = null,
     val authExpired: Boolean = false,
     val streak: Int = 0,
-    val filterableLists: List<ListChip> = emptyList(),
-    val hiddenListIds: Set<String> = emptySet(),
 ) {
     val completedCount: Int get() = completedTasks.size
     val totalCount: Int
         get() = overdueTasks.size + todayTasks.size + routineTasks.size + completedTasks.size
     val allCompleted: Boolean get() = totalCount > 0 && completedCount == totalCount
 }
-
-@androidx.compose.runtime.Immutable
-data class ListChip(val id: String, val title: String, val color: Int)
 
 internal data class TaskInputs(
     val overdue: List<TaskEntity>,
@@ -74,7 +69,6 @@ internal data class SettingsInputs(
     val authExpired: Boolean,
     val streak: Int,
     val listOrder: List<String>,
-    val hiddenListIds: Set<String>,
     val dailiesListId: String?,
     val routinesPosition: RoutinesPosition,
 )
@@ -86,17 +80,8 @@ internal data class RoutinesConfig(
 
 internal fun buildUiState(tasks: TaskInputs, settings: SettingsInputs): TodayUiState {
     val comparator = TaskEntity.flatComparator(settings.listOrder)
-    val hidden = settings.hiddenListIds
-
-    // Chips reflect every list that currently has a task, regardless of the
-    // active filter, so a hidden list can always be toggled back on.
-    val filterable = (tasks.overdue + tasks.today + tasks.completed)
-        .map { ListChip(it.listId, it.listTitle, it.listColor) }
-        .distinctBy { it.id }
-        .sortedBy { it.title }
 
     fun List<TaskEntity>.maybeSort() = if (tasks.groupByList) this else sortedWith(comparator)
-    fun List<TaskEntity>.visible() = filter { it.listId !in hidden }
 
     // Active tasks in the designated dailies list are pulled into their own
     // Routines section and never shown as overdue/today. Completed routines are
@@ -109,10 +94,10 @@ internal fun buildUiState(tasks: TaskInputs, settings: SettingsInputs): TodayUiS
     val today = tasks.today.filter { !it.isRoutine() }
 
     return TodayUiState(
-        overdueTasks = overdue.maybeSort().visible(),
-        todayTasks = today.maybeSort().visible(),
-        routineTasks = routines.sortedWith(comparator).visible(),
-        completedTasks = tasks.completed.visible(),
+        overdueTasks = overdue.maybeSort(),
+        todayTasks = today.maybeSort(),
+        routineTasks = routines.sortedWith(comparator),
+        completedTasks = tasks.completed,
         routinesPosition = settings.routinesPosition,
         lastSync = tasks.lastSync,
         groupByList = tasks.groupByList,
@@ -123,8 +108,6 @@ internal fun buildUiState(tasks: TaskInputs, settings: SettingsInputs): TodayUiS
         error = settings.error,
         authExpired = settings.authExpired,
         streak = settings.streak,
-        filterableLists = filterable,
-        hiddenListIds = hidden,
     )
 }
 
@@ -182,12 +165,11 @@ class TodayViewModel @Inject constructor(
         },
         settingsRepository.streak,
         settingsRepository.listOrder,
-        settingsRepository.hiddenListIds,
         combine(
             settingsRepository.dailiesListId,
             settingsRepository.routinesPosition,
         ) { dailiesListId, position -> RoutinesConfig(dailiesListId, position) },
-    ) { partial, streak, listOrder, hiddenListIds, routines ->
+    ) { partial, streak, listOrder, routines ->
         SettingsInputs(
             completionMethod = partial.completionMethod,
             layoutDensity = partial.layoutDensity,
@@ -196,7 +178,6 @@ class TodayViewModel @Inject constructor(
             authExpired = partial.authExpired,
             streak = streak,
             listOrder = listOrder,
-            hiddenListIds = hiddenListIds,
             dailiesListId = routines.dailiesListId,
             routinesPosition = routines.position,
         )
@@ -309,12 +290,6 @@ class TodayViewModel @Inject constructor(
             repository.createTask(title, listId, listTitle, due, notes).onFailure { e ->
                 _error.value = e.localizedMessage ?: getString(R.string.create_task_error)
             }
-        }
-    }
-
-    fun toggleListVisibility(listId: String) {
-        viewModelScope.launch {
-            settingsRepository.toggleListHidden(listId)
         }
     }
 
